@@ -105,8 +105,78 @@ class StoryViewModel: ObservableObject {
     }
 }
 
+struct BottomNavBar: View {
+    var randomAction: () -> Void
+    @Binding var selectedTab: String
+    var body: some View {
+        HStack {
+            Spacer()
+
+            VStack {
+                Image(systemName: selectedTab == "Home" ? "house.fill" : "house")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+                    .foregroundColor(selectedTab == "Home" ? .blue : .white)
+                  Text("Home")
+                      .font(.footnote)
+                      .foregroundColor(selectedTab == "Home" ? .blue : .white)
+              }
+//              .onTapGesture {
+//                  selectedTab = "All"
+//              }
+            
+            Spacer()
+            
+            VStack {
+                Image(systemName: "star") // Replace with appropriate SF Symbol or custom icon
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+                    .foregroundColor(.white)
+                Text("New")
+                    .font(.footnote)
+                    .foregroundColor(.white)
+            }
+            Spacer()
+
+            VStack {
+                Image(systemName: "rectangle.grid.2x2")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+                    .foregroundColor(.white)
+                Text("Genre")
+                    .font(.footnote)
+                    .foregroundColor(.white)
+            }
+            Spacer()
+            
+            VStack {
+                Image(systemName: "shuffle")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+                    .foregroundColor(.white)
+                Text("Random")
+                    .font(.footnote)
+                    .foregroundColor(.white)
+            }
+            .onTapGesture {
+                randomAction()  // Call the closure when the button is tapped
+            }
+            Spacer()
+        }
+        .padding(.vertical, 8) // Adjust the padding of the entire navbar
+        .background(Color.black)
+//        .shadow(color: Color.gray.opacity(0.5), radius: 5, x: 0, y: -2)
+    }
+}
+
 struct ContentView: View {
     @StateObject private var viewModel = StoryViewModel()
+    @State private var selectedTab: String = "Home"
+    @State private var selectedStory: Story? = nil
 
     var body: some View {
         NavigationView {
@@ -115,89 +185,132 @@ struct ContentView: View {
                 Color.black
                     .edgesIgnoringSafeArea(.all)
 
-                ScrollView {
-                    VStack {
-                        // Optional Title and Subtitle
-                        Text("STORYTOPIA")
-                            .font(.custom("Futura", size: 40))
-                            .fontWeight(.heavy)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(Color(hex: "#de9590"))
-                            .padding(.top, 30)
-                            .tracking(5) // Letter spacing
-                            .shadow(color: Color(hex: "#275faa").opacity(1), radius: 0, x: 5, y: 5) // Shadow
-                            .padding(.horizontal, 20)
-
-                        Text("AI Generated Short Stories")
-                            .font(.custom("Futura", size: 18))
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
+                VStack {
+                    ScrollView {
+                        VStack {
+                            // Optional Title and Subtitle
+                            Text("STORYTOPIA")
+                                .font(.custom("Futura", size: 40))
+                                .fontWeight(.heavy)
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(Color(hex: "#de9590"))
+                                .padding(.top, 30)
+                                .tracking(5) // Letter spacing
+                                .shadow(color: Color(hex: "#275faa").opacity(1), radius: 0, x: 5, y: 5) // Shadow
+                                .padding(.horizontal, 20)
+                            
+                            VStack {
+                                Text("AI Generated Short Stories")
+                                    .font(.custom("Futura", size: 18))
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.white)
+                                    .padding(.top, 0)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("New Stories Every Day")
+                                    .font(.custom("Futura", size: 16))
+                                //                                .fontWeight(.medium)
+                                    .foregroundColor(.white)
+                                    .padding(.top, 0)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("Total Count: \(viewModel.stories.count) Stories") // Dynamic count
+                                    .font(.custom("Futura", size: 14))
+                                    .fontWeight(.light)
+                                    .foregroundColor(.gray)
+                            }
                             .padding(.top, 0)
-                            .multilineTextAlignment(.center)
-
-                        // Lazy Grid for Images
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 3) {
-                            ForEach(viewModel.stories) { item in
-                                NavigationLink(destination: StoryView(
-                                    imageUrl: item.url ?? "",
-                                    title: item.title,
-                                    genre: item.genre,
-                                    synopsis: item.synopsis ?? "",
-                                    story: item.story
-                                )) {
-                                    ZStack {
-                                        // AsyncImage for image loading
-                                        AsyncImage(url: URL(string: item.url ?? "")) { phase in
-                                            switch phase {
-                                            case .empty:
-                                                Color.gray
-                                                    .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                            case .success(let image):
-                                                image
-                                                    .resizable()
-                                                    .scaledToFill()
-                                                    .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                                    .clipped()
-                                            case .failure:
-                                                Color.gray
-                                                    .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                            @unknown default:
-                                                EmptyView()
+                            
+                            // Lazy Grid for Images
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 3) {
+                                ForEach(viewModel.stories) { item in
+                                    NavigationLink(destination: StoryView(
+                                        imageUrl: item.url ?? "",
+                                        title: item.title,
+                                        genre: item.genre,
+                                        synopsis: item.synopsis ?? "",
+                                        story: item.story
+                                    )) {
+                                        ZStack {
+                                            // AsyncImage for image loading
+                                            AsyncImage(url: URL(string: item.url ?? "")) { phase in
+                                                switch phase {
+                                                case .empty:
+                                                    Color.gray
+                                                        .frame(width: UIScreen.main.bounds.width / 3, height: 200)
+                                                case .success(let image):
+                                                    image
+                                                        .resizable()
+                                                        .scaledToFill()
+                                                        .frame(width: UIScreen.main.bounds.width / 3, height: 200)
+                                                        .clipped()
+                                                case .failure:
+                                                    Color.gray
+                                                        .frame(width: UIScreen.main.bounds.width / 3, height: 200)
+                                                @unknown default:
+                                                    EmptyView()
+                                                }
+                                            }
+                                            
+                                            // Title Overlay at the Bottom
+                                            VStack {
+                                                Spacer()
+                                                Text(item.title)
+                                                    .font(.custom("AvenirNext-Bold", size: 14))
+                                                    .lineLimit(8)
+                                                    .foregroundColor(.white)
+                                                    .shadow(color: .black, radius: 2, x: 1, y: 1)
+                                                    .padding([.bottom, .leading], 10)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .multilineTextAlignment(.leading)
                                             }
                                         }
-                                        
-                                        // Title Overlay at the Bottom
-                                        VStack {
-                                            Spacer()
-                                            Text(item.title)
-                                                .font(.custom("AvenirNext-Bold", size: 14))
-                                                .lineLimit(8)
-                                                .foregroundColor(.white)
-                                                .shadow(color: .black, radius: 2, x: 1, y: 1)
-                                                .padding([.bottom, .leading], 10)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .multilineTextAlignment(.leading)
-                                        }
                                     }
-                                }
-                                .onAppear {
-                                    if !item.hasLoadedURL {
-                                        viewModel.fetchImageURL(for: item)
+                                    .onAppear {
+                                        if !item.hasLoadedURL {
+                                            viewModel.fetchImageURL(for: item)
+                                        }
                                     }
                                 }
                             }
+                            .padding(.top, 30)
                         }
-                        .padding(.top, 30)
                     }
+                    BottomNavBar(randomAction: {
+                        // Randomly select a story
+                        if !viewModel.stories.isEmpty {
+                            selectedStory = viewModel.stories.randomElement()
+                        }
+                    }, selectedTab: $selectedTab)
                 }
             }
             .onAppear {
                 viewModel.fetchStories()
             }
+            
+            .background(
+                NavigationLink(
+                    destination: StoryView(
+                        imageUrl: selectedStory?.url ?? "",
+                        title: selectedStory?.title ?? "",
+                        genre: selectedStory?.genre ?? "",
+                        synopsis: selectedStory?.synopsis ?? "",
+                        story: selectedStory?.story ?? ""
+                    ),
+                    isActive: Binding(
+                        get: { selectedStory != nil },
+                        set: { _ in selectedStory = nil }
+                    )
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+            )
+            
         }
     }
 }
