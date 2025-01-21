@@ -29,9 +29,22 @@
 		17085B382CB1D12600ED5B64 /* StoriesAIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StoriesAIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		17085B522CB22A8000ED5B64 /* Exceptions for "StoriesAI" folder in "StoriesAI" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 17085B1D2CB1D12200ED5B64 /* StoriesAI */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		17085B202CB1D12200ED5B64 /* StoriesAI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				17085B522CB22A8000ED5B64 /* Exceptions for "StoriesAI" folder in "StoriesAI" target */,
+			);
 			path = StoriesAI;
 			sourceTree = "<group>";
 		};
@@ -399,6 +412,8 @@
 				DEVELOPMENT_TEAM = A2UK5VZ977;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StoriesAI/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Storytopia;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -428,6 +443,8 @@
 				DEVELOPMENT_TEAM = A2UK5VZ977;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StoriesAI/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Storytopia;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
