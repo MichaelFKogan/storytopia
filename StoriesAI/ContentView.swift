@@ -412,20 +412,7 @@ struct StoryView: View {
                 }
                 .padding(.top)
             }
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        // Detect the swipe offset (left or right)
-                        swipeOffset = value.translation.width
-                    }
-                    .onEnded { value in
-                        // Trigger next on swipe left (negative offset)
-                        if swipeOffset < -100 { // You can adjust this threshold
-                            nextStory()
-                        }
-                        swipeOffset = 0 // Reset offset after the gesture ends
-                    }
-            )
+            
             // NavigationLink for the next story
              NavigationLink(
                  destination: NextView(
@@ -552,7 +539,7 @@ struct NextView: View {
             
             // NavigationLink for the next story
              NavigationLink(
-                 destination: StoryView(
+                 destination: NextView(
                      imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
                      title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
                      genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
