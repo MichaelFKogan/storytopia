@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct StoryView: View {
+struct StorySwipeView: View {
     var imageUrl: String
     var title: String
     var genre: String
@@ -47,7 +47,7 @@ struct StoryView: View {
                         .foregroundColor(.white.opacity(0.8))
                         .padding(.horizontal, 20)
                         .padding(.top, 4)
-                        .italic() 
+                        .italic()
 
                     Text(story)
                         .font(.title2)
@@ -67,9 +67,9 @@ struct StoryView: View {
     }
 }
 
-struct StoryView_Previews: PreviewProvider {
+struct StorySwipeView_Previews: PreviewProvider {
     static var previews: some View {
-        StoryView(
+        StorySwipeView(
             imageUrl: "https://i.imgur.com/UoPpVKw.jpeg",
             title: "AI Journey: The Girl Who Knew Too Much",
             genre: "Cyberpunk",

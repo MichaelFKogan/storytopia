@@ -3,7 +3,7 @@ import SwiftUI
 extension Color {
     init(hex: String) {
         // Ensure that the hex string starts with '#' and remove it
-        var hexSanitized = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
+        let hexSanitized = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
         
         // If the string is 6 characters long, it's a valid RGB hex code
         if hexSanitized.count == 6 {
@@ -173,10 +173,25 @@ struct BottomNavBar: View {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 struct ContentView: View {
     @StateObject private var viewModel = StoryViewModel()
     @State private var selectedTab: String = "Home"
-    @State private var selectedStory: Story? = nil
+//    @State private var selectedStory: Story? = nil
+    @State private var selectedStoryIndex: Int? = nil
 
     var body: some View {
         NavigationView {
@@ -227,14 +242,20 @@ struct ContentView: View {
                                 GridItem(.flexible()),
                                 GridItem(.flexible())
                             ], spacing: 3) {
-                                ForEach(viewModel.stories) { item in
+                                ForEach(viewModel.stories.indices, id: \.self) { index in
+                                    let item = viewModel.stories[index]
                                     NavigationLink(destination: StoryView(
                                         imageUrl: item.url ?? "",
                                         title: item.title,
                                         genre: item.genre,
                                         synopsis: item.synopsis ?? "",
-                                        story: item.story
-                                    )) {
+                                        story: item.story,
+                                        currentIndex: index,
+                                        selectedStoryIndex: $selectedStoryIndex,
+                                        viewModel: viewModel  // Pass viewModel to StoryView
+                                    ),
+                                       tag: index, // Associate each item with an index
+                                       selection: $selectedStoryIndex ) {
                                         ZStack {
                                             // AsyncImage for image loading
                                             AsyncImage(url: URL(string: item.url ?? "")) { phase in
@@ -282,9 +303,9 @@ struct ContentView: View {
                     }
                     BottomNavBar(randomAction: {
                         // Randomly select a story
-                        if !viewModel.stories.isEmpty {
-                            selectedStory = viewModel.stories.randomElement()
-                        }
+//                        if !viewModel.stories.isEmpty {
+//                            selectedStory = viewModel.stories.randomElement()
+//                        }
                     }, selectedTab: $selectedTab)
                 }
             }
@@ -292,28 +313,277 @@ struct ContentView: View {
                 viewModel.fetchStories()
             }
             
-            .background(
-                NavigationLink(
-                    destination: StoryView(
-                        imageUrl: selectedStory?.url ?? "",
-                        title: selectedStory?.title ?? "",
-                        genre: selectedStory?.genre ?? "",
-                        synopsis: selectedStory?.synopsis ?? "",
-                        story: selectedStory?.story ?? ""
-                    ),
-                    isActive: Binding(
-                        get: { selectedStory != nil },
-                        set: { _ in selectedStory = nil }
-                    )
-                ) {
-                    EmptyView()
-                }
-                .hidden()
-            )
+//            .background(
+//                NavigationLink(
+//                    destination: StoryView(
+//                        imageUrl: selectedStoryIndex?.url ?? "",
+//                        title: selectedStoryIndex?.title ?? "",
+//                        genre: selectedStoryIndex?.genre ?? "",
+//                        synopsis: selectedStoryIndex?.synopsis ?? "",
+//                        story: selectedStoryIndex?.story ?? ""
+//                    ),
+//                    isActive: Binding(
+//                        get: { selectedStoryIndex != nil },
+//                        set: { _ in selectedStoryIndex = nil }
+//                    )
+//                ) {
+//                    EmptyView()
+//                }
+//                .hidden()
+//            )
             
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+struct StoryView: View {
+    var imageUrl: String
+    var title: String
+    var genre: String
+    var synopsis: String
+    var story: String
+
+    var currentIndex: Int
+    @Binding var selectedStoryIndex: Int?
+    var viewModel: StoryViewModel  // Receive viewModel
+
+    var body: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+
+            ScrollView {
+                VStack(alignment: .leading) {
+                    AsyncImage(url: URL(string: imageUrl)) { phase in
+                        switch phase {
+                        case .empty:
+                            Color.gray.frame(height: 300)
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxWidth: .infinity)
+                                .clipped()
+                        case .failure:
+                            Color.gray.frame(height: 300)
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+
+                    Text(title)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+
+                    Text(genre)
+                        .font(.title2)
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.horizontal, 20)
+                    
+                    // Add the synopsis here
+                    Text(synopsis)
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.horizontal, 20)
+                        .padding(.top, 4)
+                        .italic()
+
+                    Text(story)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 0)
+                        .lineSpacing(8)
+
+                    Spacer()
+                }
+                .padding(.top)
+            }
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        // Detect the swipe offset (left or right)
+                        swipeOffset = value.translation.width
+                    }
+                    .onEnded { value in
+                        // Trigger next on swipe left (negative offset)
+                        if swipeOffset < -100 { // You can adjust this threshold
+                            nextStory()
+                        }
+                        swipeOffset = 0 // Reset offset after the gesture ends
+                    }
+            )
+            // NavigationLink for the next story
+             NavigationLink(
+                 destination: NextView(
+                     imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
+                     title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
+                     genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
+                     synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
+                     story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
+                     currentIndex: (currentIndex + 1) % viewModel.stories.count,
+                     selectedStoryIndex: $selectedStoryIndex,
+                     viewModel: viewModel
+                 )
+             ) {
+                Text("Next")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                    .shadow(radius: 5)
+            }
+            .padding([.top, .trailing], 16)
+            
+        }
+        .navigationTitle("")
+        .navigationBarHidden(false)
+    }
+}
+
+
+
+
+
+
+
+
+
+//struct NextView: View {
+//    var body: some View {
+//        ZStack {
+//            Color.black.edgesIgnoringSafeArea(.all)
+//            Text("Welcome to the Next View!")
+//                .font(.largeTitle)
+//                .fontWeight(.bold)
+//                .foregroundColor(.white)
+//        }
+//    }
+//}
+
+
+
+
+
+
+
+
+
+
+struct NextView: View {
+    var imageUrl: String
+    var title: String
+    var genre: String
+    var synopsis: String
+    var story: String
+    
+    var currentIndex: Int
+    @Binding var selectedStoryIndex: Int?
+    var viewModel: StoryViewModel  // Receive viewModel
+
+    var body: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+
+            ScrollView {
+                VStack(alignment: .leading) {
+                    AsyncImage(url: URL(string: imageUrl)) { phase in
+                        switch phase {
+                        case .empty:
+                            Color.gray.frame(height: 300)
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxWidth: .infinity)
+                                .clipped()
+                        case .failure:
+                            Color.gray.frame(height: 300)
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+
+                    Text(title)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+
+                    Text(genre)
+                        .font(.title2)
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.horizontal, 20)
+                    
+                    // Add the synopsis here
+                    Text(synopsis)
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.horizontal, 20)
+                        .padding(.top, 4)
+                        .italic()
+
+                    Text(story)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 0)
+                        .lineSpacing(8)
+
+                    Spacer()
+                }
+                .padding(.top)
+            }
+            
+            // NavigationLink for the next story
+             NavigationLink(
+                 destination: StoryView(
+                     imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
+                     title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
+                     genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
+                     synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
+                     story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
+                     currentIndex: (currentIndex + 1) % viewModel.stories.count,
+                     selectedStoryIndex: $selectedStoryIndex,
+                     viewModel: viewModel
+                 )
+             ) {
+                Text("Next")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                    .shadow(radius: 5)
+            }
+            .padding([.top, .trailing], 16)
+            
+        }
+        .navigationTitle("")
+        .navigationBarHidden(false)
+    }
+}
+
+
+
+
+
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
