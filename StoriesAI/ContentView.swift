@@ -633,11 +633,11 @@ struct StoryView: View {
                 }
                 .onEnded { value in
                     // Swipe left (forward): Navigate to next story
-                    if dragAmount < -100 {
+                    if dragAmount < -50 {
                         navigateToNext = true
                     }
                     // Swipe right (backward): Go back (dismiss the view)
-                    else if dragAmount > 100 {
+                    else if dragAmount > 50 {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
@@ -766,11 +766,11 @@ struct NextView: View {
                 }
                 .onEnded { value in
                     // Swipe left (forward): Navigate to next story
-                    if dragAmount < -100 {
+                    if dragAmount < -50 {
                         navigateToNext = true
                     }
                     // Swipe right (backward): Go back (dismiss the view)
-                    else if dragAmount > 100 {
+                    else if dragAmount > 50 {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
@@ -899,11 +899,11 @@ struct StoryViewDate: View {
                 }
                 .onEnded { value in
                     // Swipe left (forward): Navigate to next story
-                    if dragAmount < -100 {
+                    if dragAmount < -50 {
                         navigateToNext = true
                     }
                     // Swipe right (backward): Go back (dismiss the view)
-                    else if dragAmount > 100 {
+                    else if dragAmount > 50 {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
@@ -1036,11 +1036,11 @@ struct StoryViewDate: View {
 //                }
 //                .onEnded { value in
 //                    // Swipe left (forward): Navigate to next story
-//                    if dragAmount < -100 {
+//                    if dragAmount < -50 {
 //                        navigateToNext = true
 //                    }
 //                    // Swipe right (backward): Go back (dismiss the view)
-//                    else if dragAmount > 100 {
+//                    else if dragAmount > 50 {
 //                        presentationMode.wrappedValue.dismiss()
 //                    }
 //                }
@@ -1104,7 +1104,7 @@ struct RandomView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 20)
                                 .padding(.top, 0)
-                                .lineSpacing(8)
+                                .lineSpacing(0)
                         }
                         .padding()
                     }
@@ -1148,8 +1148,9 @@ struct RandomView: View {
                             dragAmount = value.translation.width
                         }
                         .onEnded { value in
-                            if abs(dragAmount) > 100 {
-                                loadRandomStory() // Trigger next story for both left and right swipes
+                            // Trigger action only for a left swipe (negative dragAmount)
+                            if dragAmount < -50 {
+                                loadRandomStory()
                             }
                         }
                 )
