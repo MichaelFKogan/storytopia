@@ -1,5 +1,7 @@
 import SwiftUI
-import StoreKit
+
+
+
 
 extension Color {
     init(hex: String) {
@@ -516,28 +518,31 @@ struct StoryView: View {
     var genre: String
     var synopsis: String
     var story: String
-
+    
     var currentIndex: Int
     @Binding var selectedStoryIndex: Int?
     var viewModel: StoryViewModel  // Receive viewModel
     
     @Environment(\.presentationMode) var presentationMode
     @State private var dragAmount: CGFloat = 0
-
+    
     // State for manual navigation
     @State private var navigateToNext = false
     @State private var showPopup = false // State for showing the popup
     @State private var scrollOffset: CGFloat = 0
     
+    // State for subscription
+    @EnvironmentObject var storeManager: StoreManager  // Shared instance
+    
     // Split the story into paragraphs
-     private var paragraphs: [String] {
-         return story.components(separatedBy: "\n").filter { !$0.isEmpty }
-     }
+    private var paragraphs: [String] {
+        return story.components(separatedBy: "\n").filter { !$0.isEmpty }
+    }
     
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
-
+            
             VStack {
                 ScrollView {
                     VStack(alignment: .leading) {
@@ -558,299 +563,202 @@ struct StoryView: View {
                             }
                         }
                         
-                        Text(title)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                        
-                        Text(genre)
-                            .font(.title2)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                        
-                        Text(synopsis)
-                            .font(.body)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                            .padding(.top, 4)
-                            .italic()
-                        
-//                        Text(story)
-//                            .font(.system(size: 22))
-//                            .fontWeight(.medium)
-//                            .foregroundColor(.white)
-//                            .padding(.horizontal, 20)
-//                            .padding(.top, 0)
-//                            .lineSpacing(0)
-                        
-                        // Display first 5 paragraphs without blur
-                        ForEach(0..<min(paragraphs.count, 5), id: \.self) { index in
-                            Text(paragraphs[index])
-                                .font(.system(size: 22))
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20)
-                                .padding(.trailing, 0)
-                                .padding(.top, 10)
-                                .lineSpacing(0)
+                        if storeManager.isSubscribed {
+                            restoreSubscriptionView
                         }
                         
-                        // Subscription Text and Button
-                        VStack {
-                            Text("Subscribe for Full Access")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 20)
-                                .padding(.top, 20)
-                            
-                            Text("$9.99/month")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 20)
-                                .padding(.top, 5)
-                            
-                            Button(action: {
-                                // Add subscription logic here
-                            }) {
-                                Text("Subscribe Now")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Color.blue)
-                                    .cornerRadius(10)
-                                    .padding(.top, 10)
-                            }
-                            Text("Get unlimited access to all stories.")
-                                .font(.body)
-                                .foregroundColor(.white.opacity(0.8))
-                                .multilineTextAlignment(.center)
-                                .padding(.top, 10)
-                                .padding(.bottom, 0)
-                            
-                            Text("Cancel anytime.")
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.8))
-                                .multilineTextAlignment(.center)
-                                .padding(.top, 0)
-                        }
-                        .padding(.top, 20)
-                        .padding(.bottom, 30)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                        titleView
+                        genreView
+                        synopsisView
+                        storyParagraphsView
                         
-                        // Display paragraphs after the 5th with blur
-                        ForEach(5..<paragraphs.count, id: \.self) { index in
-                            Text(paragraphs[index])
-                                .font(.system(size: 22))
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20)
-                                .padding(.trailing, 0)
-                                .padding(.top, 10)
-                                .lineSpacing(0)
-                                .blur(radius: 5) // Apply blur effect
+                        if !storeManager.isSubscribed {
+                            subscriptionView
                         }
                         
+                        additionalStoryParagraphsView
                         Spacer()
                     }
                     .padding(.top)
                 }
             }
-            
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(
-                        destination: NextView(
-                            imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
-                            title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
-                            genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
-                            synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
-                            story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
-                            currentIndex: (currentIndex + 1) % viewModel.stories.count,
-                            selectedStoryIndex: $selectedStoryIndex,
-                            viewModel: viewModel
-                        ),
-                        isActive: $navigateToNext
-                    ) {
-                        HStack(spacing: 4) {
-                            Text("Next")
-                            Image(systemName: "chevron.right")
-                        }
-                        .foregroundColor(.blue) // Matches the navigation bar style
-                    }
-                }
-            }
-            .padding([.top, .trailing], 16)
-            
-        }
-        .navigationTitle("")
-        .navigationBarHidden(false)
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    dragAmount = value.translation.width
-                }
-                .onEnded { value in
-                    // Swipe left (forward): Navigate to next story
-                    if dragAmount < -50 {
-                        navigateToNext = true
-                    }
-                    // Swipe right (backward): Go back (dismiss the view)
-                    else if dragAmount > 50 {
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
-        )
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-struct NextView: View {
-    var imageUrl: String
-    var title: String
-    var genre: String
-    var synopsis: String
-    var story: String
-    
-    var currentIndex: Int
-    @Binding var selectedStoryIndex: Int?
-    var viewModel: StoryViewModel  // Receive viewModel
-    
-    @Environment(\.presentationMode) var presentationMode
-    
-    @State private var dragAmount: CGFloat = 0
-    @State private var navigateToNext = false
-
-    var body: some View {
-        ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-
-            VStack {
-                ScrollView {
-                    VStack(alignment: .leading) {
-                        AsyncImage(url: URL(string: imageUrl)) { phase in
-                            switch phase {
-                            case .empty:
-                                Color.gray.frame(height: 300)
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(maxWidth: .infinity)
-                                    .clipped()
-                            case .failure:
-                                Color.gray.frame(height: 300)
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
-                        
-                        Text(title)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                        
-                        Text(genre)
-                            .font(.title2)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                        
-                        Text(synopsis)
-                            .font(.body)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                            .padding(.top, 4)
-                            .italic()
-                        
-                        Text(story)
-                            .font(.system(size: 22))
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                            .padding(.top, 0)
-                            .lineSpacing(0)
-                        
-                        Spacer()
-                    }
-                    .padding(.top)
-                }
-            }
-            
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(
-                        destination: NextView(
-                            imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
-                            title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
-                            genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
-                            synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
-                            story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
-                            currentIndex: (currentIndex + 1) % viewModel.stories.count,
-                            selectedStoryIndex: $selectedStoryIndex,
-                            viewModel: viewModel
-                        ),
-                        isActive: $navigateToNext
-                    ) {
-                        Label("Next", systemImage: "chevron.right")
-                            .labelStyle(TitleAndIconLabelStyle())
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.blue)
-                            .cornerRadius(8)
-                            .shadow(radius: 5)
-                    }
+                    nextStoryButton
                 }
             }
             .padding([.top, .trailing], 16)
         }
         .navigationTitle("")
         .navigationBarHidden(false)
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    dragAmount = value.translation.width
+        .gesture(dragGesture)
+        .onAppear {
+            storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
+            storeManager.restorePurchases()
+        }
+        .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
+            storeManager.isSubscribed = purchasedProductIDs.contains("storytopia_monthly_subscription")
+            print("isSubscribed: \(storeManager.isSubscribed)") // Add this line for debugging
+        }
+    }
+    
+    // Define separate smaller views
+    
+    private var restoreSubscriptionView: some View {
+        Button(action: {
+            storeManager.purchasedProductIDs.removeAll() // Simulate unsubscribed state
+            storeManager.isSubscribed = false // Update the view to show the subscription screen
+        }) {
+            Text("Unsubscribe for Testing")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.red)
+                .cornerRadius(10)
+                .padding(.top, 10)
+        }
+    }
+    
+    private var titleView: some View {
+        Text(title)
+            .font(.largeTitle)
+            .fontWeight(.bold)
+            .foregroundColor(.white)
+            .padding(.leading, 20)
+    }
+    
+    private var genreView: some View {
+        Text(genre)
+            .font(.title2)
+            .foregroundColor(.white.opacity(0.8))
+            .padding(.leading, 20)
+    }
+    
+    private var synopsisView: some View {
+        Text(synopsis)
+            .font(.body)
+            .foregroundColor(.white.opacity(0.8))
+            .padding(.leading, 20)
+            .padding(.top, 4)
+            .italic()
+    }
+    
+    private var storyParagraphsView: some View {
+        ForEach(0..<min(paragraphs.count, 5), id: \.self) { index in
+            Text(paragraphs[index])
+                .font(.system(size: 22))
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .padding(.leading, 20)
+                .padding(.trailing, 0)
+                .padding(.top, 10)
+                .lineSpacing(0)
+        }
+    }
+    
+    private var subscriptionView: some View {
+        VStack {
+            Text("Subscribe for Full Access")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+            
+            Text("$9.99/month")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.top, 5)
+            
+            Button(action: {
+                if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                    storeManager.purchase(product: product)
                 }
-                .onEnded { value in
-                    // Swipe left (forward): Navigate to next story
-                    if dragAmount < -50 {
-                        navigateToNext = true
-                    }
-                    // Swipe right (backward): Go back (dismiss the view)
-                    else if dragAmount > 50 {
-                        presentationMode.wrappedValue.dismiss()
-                    }
+            }) {
+                Text("Subscribe Now")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                    .padding(.top, 10)
+            }
+            
+            Text("Get unlimited access to all stories.")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.top, 10)
+                .padding(.bottom, 0)
+            
+            Text("Cancel anytime.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.top, 0)
+        }
+        .padding(.top, 20)
+        .padding(.bottom, 30)
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+    
+    private var additionalStoryParagraphsView: some View {
+        ForEach(5..<paragraphs.count, id: \.self) { index in
+            Text(paragraphs[index])
+                .font(.system(size: 22))
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .padding(.leading, 20)
+                .padding(.trailing, 0)
+                .padding(.top, 10)
+                .lineSpacing(0)
+                .blur(radius: storeManager.isSubscribed ? 0 : 5) // Remove blur if subscribed
+        }
+    }
+    
+    private var nextStoryButton: some View {
+        NavigationLink(
+            destination: StoryView(
+                imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
+                title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
+                genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
+                synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
+                story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
+                currentIndex: (currentIndex + 1) % viewModel.stories.count,
+                selectedStoryIndex: $selectedStoryIndex,
+                viewModel: viewModel
+            ),
+            isActive: $navigateToNext
+        ) {
+            HStack(spacing: 4) {
+
+                Image(systemName: "chevron.right")
+            }
+            .foregroundColor(.blue)
+        }
+    }
+    
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                dragAmount = value.translation.width
+            }
+            .onEnded { value in
+                // Swipe left (forward): Navigate to next story
+                if dragAmount < -50 {
+                    navigateToNext = true
                 }
-        )
+                // Swipe right (backward): Go back (dismiss the view)
+                else if dragAmount > 50 {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            }
     }
 }
-
-
-
-
 
 
 
@@ -867,20 +775,31 @@ struct StoryViewDate: View {
     var genre: String
     var synopsis: String
     var story: String
-
+    
     var currentIndex: Int
     @Binding var selectedStoryIndex: Int?
     var viewModel: NewViewModel  // Receive viewModel
     
     @Environment(\.presentationMode) var presentationMode
-    
     @State private var dragAmount: CGFloat = 0
+    
+    // State for manual navigation
     @State private var navigateToNext = false
-
+    @State private var showPopup = false // State for showing the popup
+    @State private var scrollOffset: CGFloat = 0
+    
+    // State for subscription
+    @EnvironmentObject var storeManager: StoreManager  // Shared instance
+    
+    // Split the story into paragraphs
+    private var paragraphs: [String] {
+        return story.components(separatedBy: "\n").filter { !$0.isEmpty }
+    }
+    
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
-
+            
             VStack {
                 ScrollView {
                     VStack(alignment: .leading) {
@@ -901,226 +820,216 @@ struct StoryViewDate: View {
                             }
                         }
                         
-                        Text(title)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
+                        if storeManager.isSubscribed {
+                            restoreSubscriptionView
+                        }
                         
-                        Text(genre)
-                            .font(.title2)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
+                        titleView
+                        genreView
+                        synopsisView
+                        storyParagraphsView
                         
-                        Text(synopsis)
-                            .font(.body)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                            .padding(.top, 4)
-                            .italic()
+                        if !storeManager.isSubscribed {
+                            subscriptionView
+                        }
                         
-                        Text(story)
-                            .font(.system(size: 22))
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.leading, 20)
-                            .padding(.trailing, 0)
-                            .padding(.top, 0)
-                            .lineSpacing(0)
-                        
+                        additionalStoryParagraphsView
                         Spacer()
                     }
                     .padding(.top)
                 }
             }
-            
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-//            .toolbar {
-//                ToolbarItem(placement: .navigationBarTrailing) {
-//                    NavigationLink(
-//                        destination: NextViewDate(
-//                            imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
-//                            title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
-//                            genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
-//                            synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
-//                            story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
-//                            currentIndex: (currentIndex + 1) % viewModel.stories.count,
-//                            selectedStoryIndex: $selectedStoryIndex,
-//                            viewModel: viewModel
-//                        ),
-//                        isActive: $navigateToNext
-//                    ) {
-//                        HStack(spacing: 4) {
-//                            Text("Next")
-//                            Image(systemName: "chevron.right")
-//                        }
-//                        .foregroundColor(.blue)
-//                    }
-//                }
-//            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    nextStoryButton
+                }
+            }
             .padding([.top, .trailing], 16)
         }
         .navigationTitle("")
         .navigationBarHidden(false)
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    dragAmount = value.translation.width
+        .gesture(dragGesture)
+        .onAppear {
+            storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
+            storeManager.restorePurchases()
+        }
+        .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
+            storeManager.isSubscribed = purchasedProductIDs.contains("storytopia_monthly_subscription")
+            print("isSubscribed: \(storeManager.isSubscribed)") // Add this line for debugging
+        }
+    }
+    
+    // Define separate smaller views
+    
+    private var restoreSubscriptionView: some View {
+        Button(action: {
+            storeManager.purchasedProductIDs.removeAll() // Simulate unsubscribed state
+            storeManager.isSubscribed = false // Update the view to show the subscription screen
+        }) {
+            Text("Unsubscribe for Testing")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.red)
+                .cornerRadius(10)
+                .padding(.top, 10)
+        }
+    }
+    
+    private var titleView: some View {
+        Text(title)
+            .font(.largeTitle)
+            .fontWeight(.bold)
+            .foregroundColor(.white)
+            .padding(.leading, 20)
+    }
+    
+    private var genreView: some View {
+        Text(genre)
+            .font(.title2)
+            .foregroundColor(.white.opacity(0.8))
+            .padding(.leading, 20)
+    }
+    
+    private var synopsisView: some View {
+        Text(synopsis)
+            .font(.body)
+            .foregroundColor(.white.opacity(0.8))
+            .padding(.leading, 20)
+            .padding(.top, 4)
+            .italic()
+    }
+    
+    private var storyParagraphsView: some View {
+        ForEach(0..<min(paragraphs.count, 5), id: \.self) { index in
+            Text(paragraphs[index])
+                .font(.system(size: 22))
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .padding(.leading, 20)
+                .padding(.trailing, 0)
+                .padding(.top, 10)
+                .lineSpacing(0)
+        }
+    }
+    
+    private var subscriptionView: some View {
+        VStack {
+            Text("Subscribe for Full Access")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+            
+            Text("$9.99/month")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.top, 5)
+            
+            Button(action: {
+                if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                    storeManager.purchase(product: product)
                 }
-                .onEnded { value in
-                    // Swipe left (forward): Navigate to next story
-                    if dragAmount < -50 {
-                        navigateToNext = true
+            }) {
+                Text("Subscribe Now")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                    .padding(.top, 10)
+            }
+            
+            Text("Get unlimited access to all stories.")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.top, 10)
+                .padding(.bottom, 0)
+            
+            Text("Cancel anytime.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.top, 0)
+        }
+        .padding(.top, 20)
+        .padding(.bottom, 30)
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+    
+    private var additionalStoryParagraphsView: some View {
+        ForEach(5..<paragraphs.count, id: \.self) { index in
+            Text(paragraphs[index])
+                .font(.system(size: 22))
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .padding(.leading, 20)
+                .padding(.trailing, 0)
+                .padding(.top, 10)
+                .lineSpacing(0)
+                .blur(radius: storeManager.isSubscribed ? 0 : 5) // Remove blur if subscribed
+        }
+    }
+    
+    private var nextStoryButton: some View {
+        let flattenedStories = viewModel.dateStories.flatMap { $0.stories }
+        
+        if flattenedStories.isEmpty {
+            return AnyView(
+                Text("No more stories available")
+                    .foregroundColor(.gray)
+            )
+        } else {
+            return AnyView(
+                NavigationLink(
+                    destination: StoryViewDate(
+                        imageUrl: flattenedStories[(currentIndex + 1) % flattenedStories.count].url ?? "",
+                        title: flattenedStories[(currentIndex + 1) % flattenedStories.count].title,
+                        genre: flattenedStories[(currentIndex + 1) % flattenedStories.count].genre,
+                        synopsis: flattenedStories[(currentIndex + 1) % flattenedStories.count].synopsis ?? "",
+                        story: flattenedStories[(currentIndex + 1) % flattenedStories.count].story,
+                        currentIndex: (currentIndex + 1) % flattenedStories.count,
+                        selectedStoryIndex: $selectedStoryIndex,
+                        viewModel: viewModel
+                    ),
+                    isActive: $navigateToNext
+                ) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.right")
                     }
-                    // Swipe right (backward): Go back (dismiss the view)
-                    else if dragAmount > 50 {
-                        presentationMode.wrappedValue.dismiss()
-                    }
+                    .foregroundColor(.blue)
                 }
-        )
+            )
+        }
+    }
+
+
+    
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                dragAmount = value.translation.width
+            }
+            .onEnded { value in
+                // Swipe left (forward): Navigate to next story
+                if dragAmount < -50 {
+                    navigateToNext = true
+                }
+                // Swipe right (backward): Go back (dismiss the view)
+                else if dragAmount > 50 {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            }
     }
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-//struct NextViewDate: View {
-//    var imageUrl: String
-//    var title: String
-//    var genre: String
-//    var synopsis: String
-//    var story: String
-//    
-//    var currentIndex: Int
-//    @Binding var selectedStoryIndex: Int?
-//    var viewModel: NewViewModel  // Receive viewModel
-//    
-//    @Environment(\.presentationMode) var presentationMode
-//    
-//    @State private var dragAmount: CGFloat = 0
-//    @State private var navigateToNext = false
-//
-//    var body: some View {
-//        ZStack {
-//            Color.black.edgesIgnoringSafeArea(.all)
-//
-//            VStack{
-//                ScrollView {
-//                    VStack(alignment: .leading) {
-//                        AsyncImage(url: URL(string: imageUrl)) { phase in
-//                            switch phase {
-//                            case .empty:
-//                                Color.gray.frame(height: 300)
-//                            case .success(let image):
-//                                image
-//                                    .resizable()
-//                                    .scaledToFit()
-//                                    .frame(maxWidth: .infinity)
-//                                    .clipped()
-//                            case .failure:
-//                                Color.gray.frame(height: 300)
-//                            @unknown default:
-//                                EmptyView()
-//                            }
-//                        }
-//                        
-//                        Text(title)
-//                            .font(.largeTitle)
-//                            .fontWeight(.bold)
-//                            .foregroundColor(.white)
-//                            .padding(.horizontal, 20)
-//                        
-//                        Text(genre)
-//                            .font(.title2)
-//                            .foregroundColor(.white.opacity(0.8))
-//                            .padding(.horizontal, 20)
-//                        
-//                        Text(synopsis)
-//                            .font(.body)
-//                            .foregroundColor(.white.opacity(0.8))
-//                            .padding(.horizontal, 20)
-//                            .padding(.top, 4)
-//                            .italic()
-//                        
-//                        Text(story)
-//                            .font(.system(size: 22))
-//                            .fontWeight(.medium)
-//                            .foregroundColor(.white)
-//                            .padding(.horizontal, 20)
-//                            .padding(.top, 0)
-//                            .lineSpacing(0)
-//
-//                        Spacer()
-//                    }
-//                    .padding(.top)
-//                }
-//            }
-//            
-//            .navigationTitle("")
-//            .navigationBarTitleDisplayMode(.inline)
-//            .toolbar {
-//                ToolbarItem(placement: .navigationBarTrailing) {
-//                    NavigationLink(
-//                        destination: NextViewDate(
-//                            imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
-//                            title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
-//                            genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
-//                            synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
-//                            story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
-//                            currentIndex: (currentIndex + 1) % viewModel.stories.count,
-//                            selectedStoryIndex: $selectedStoryIndex,
-//                            viewModel: viewModel
-//                        ),
-//                        isActive: $navigateToNext
-//                    ) {
-//                        Label("Next", systemImage: "chevron.right")
-//                            .labelStyle(TitleAndIconLabelStyle())
-//                            .font(.headline)
-//                            .foregroundColor(.white)
-//                            .padding()
-//                            .background(Color.blue)
-//                            .cornerRadius(8)
-//                            .shadow(radius: 5)
-//                    }
-//                }
-//            }
-//            .padding([.top, .trailing], 16)
-//        }
-//        .navigationTitle("")
-//        .navigationBarHidden(false)
-//        .gesture(
-//            DragGesture()
-//                .onChanged { value in
-//                    dragAmount = value.translation.width
-//                }
-//                .onEnded { value in
-//                    // Swipe left (forward): Navigate to next story
-//                    if dragAmount < -50 {
-//                        navigateToNext = true
-//                    }
-//                    // Swipe right (backward): Go back (dismiss the view)
-//                    else if dragAmount > 50 {
-//                        presentationMode.wrappedValue.dismiss()
-//                    }
-//                }
-//        )
-//    }
-//}
 
 
 
@@ -1260,6 +1169,132 @@ struct RandomView: View {
 
 
 
+//struct NextView: View {
+//    var imageUrl: String
+//    var title: String
+//    var genre: String
+//    var synopsis: String
+//    var story: String
+//    
+//    var currentIndex: Int
+//    @Binding var selectedStoryIndex: Int?
+//    var viewModel: StoryViewModel  // Receive viewModel
+//    
+//    @Environment(\.presentationMode) var presentationMode
+//    
+//    @State private var dragAmount: CGFloat = 0
+//    @State private var navigateToNext = false
+//
+//    var body: some View {
+//        ZStack {
+//            Color.black.edgesIgnoringSafeArea(.all)
+//
+//            VStack {
+//                ScrollView {
+//                    VStack(alignment: .leading) {
+//                        AsyncImage(url: URL(string: imageUrl)) { phase in
+//                            switch phase {
+//                            case .empty:
+//                                Color.gray.frame(height: 300)
+//                            case .success(let image):
+//                                image
+//                                    .resizable()
+//                                    .scaledToFit()
+//                                    .frame(maxWidth: .infinity)
+//                                    .clipped()
+//                            case .failure:
+//                                Color.gray.frame(height: 300)
+//                            @unknown default:
+//                                EmptyView()
+//                            }
+//                        }
+//                        
+//                        Text(title)
+//                            .font(.largeTitle)
+//                            .fontWeight(.bold)
+//                            .foregroundColor(.white)
+//                            .padding(.leading, 20)
+//                            .padding(.trailing, 0)
+//                        
+//                        Text(genre)
+//                            .font(.title2)
+//                            .foregroundColor(.white.opacity(0.8))
+//                            .padding(.leading, 20)
+//                            .padding(.trailing, 0)
+//                        
+//                        Text(synopsis)
+//                            .font(.body)
+//                            .foregroundColor(.white.opacity(0.8))
+//                            .padding(.leading, 20)
+//                            .padding(.trailing, 0)
+//                            .padding(.top, 4)
+//                            .italic()
+//                        
+//                        Text(story)
+//                            .font(.system(size: 22))
+//                            .fontWeight(.medium)
+//                            .foregroundColor(.white)
+//                            .padding(.leading, 20)
+//                            .padding(.trailing, 0)
+//                            .padding(.top, 0)
+//                            .lineSpacing(0)
+//                        
+//                        Spacer()
+//                    }
+//                    .padding(.top)
+//                }
+//            }
+//            
+//            .navigationTitle("")
+//            .navigationBarTitleDisplayMode(.inline)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    NavigationLink(
+//                        destination: NextView(
+//                            imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
+//                            title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
+//                            genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
+//                            synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
+//                            story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
+//                            currentIndex: (currentIndex + 1) % viewModel.stories.count,
+//                            selectedStoryIndex: $selectedStoryIndex,
+//                            viewModel: viewModel
+//                        ),
+//                        isActive: $navigateToNext
+//                    ) {
+//                        Label("Next", systemImage: "chevron.right")
+//                            .labelStyle(TitleAndIconLabelStyle())
+//                            .font(.headline)
+//                            .foregroundColor(.white)
+//                            .padding()
+//                            .background(Color.blue)
+//                            .cornerRadius(8)
+//                            .shadow(radius: 5)
+//                    }
+//                }
+//            }
+//            .padding([.top, .trailing], 16)
+//        }
+//        .navigationTitle("")
+//        .navigationBarHidden(false)
+//        .gesture(
+//            DragGesture()
+//                .onChanged { value in
+//                    dragAmount = value.translation.width
+//                }
+//                .onEnded { value in
+//                    // Swipe left (forward): Navigate to next story
+//                    if dragAmount < -50 {
+//                        navigateToNext = true
+//                    }
+//                    // Swipe right (backward): Go back (dismiss the view)
+//                    else if dragAmount > 50 {
+//                        presentationMode.wrappedValue.dismiss()
+//                    }
+//                }
+//        )
+//    }
+//}
 
 
 
@@ -1274,6 +1309,266 @@ struct RandomView: View {
 
 
 
+//struct StoryViewDate: View {
+//    var imageUrl: String
+//    var title: String
+//    var genre: String
+//    var synopsis: String
+//    var story: String
+//
+//    var currentIndex: Int
+//    @Binding var selectedStoryIndex: Int?
+//    var viewModel: NewViewModel  // Receive viewModel
+//    
+//    @Environment(\.presentationMode) var presentationMode
+//    
+//    @State private var dragAmount: CGFloat = 0
+//    @State private var navigateToNext = false
+//
+//    var body: some View {
+//        ZStack {
+//            Color.black.edgesIgnoringSafeArea(.all)
+//
+//            VStack {
+//                ScrollView {
+//                    VStack(alignment: .leading) {
+//                        AsyncImage(url: URL(string: imageUrl)) { phase in
+//                            switch phase {
+//                            case .empty:
+//                                Color.gray.frame(height: 300)
+//                            case .success(let image):
+//                                image
+//                                    .resizable()
+//                                    .scaledToFit()
+//                                    .frame(maxWidth: .infinity)
+//                                    .clipped()
+//                            case .failure:
+//                                Color.gray.frame(height: 300)
+//                            @unknown default:
+//                                EmptyView()
+//                            }
+//                        }
+//                        
+//                        Text(title)
+//                            .font(.largeTitle)
+//                            .fontWeight(.bold)
+//                            .foregroundColor(.white)
+//                            .padding(.leading, 20)
+//                            .padding(.trailing, 0)
+//                        
+//                        Text(genre)
+//                            .font(.title2)
+//                            .foregroundColor(.white.opacity(0.8))
+//                            .padding(.leading, 20)
+//                            .padding(.trailing, 0)
+//                        
+//                        Text(synopsis)
+//                            .font(.body)
+//                            .foregroundColor(.white.opacity(0.8))
+//                            .padding(.leading, 20)
+//                            .padding(.trailing, 0)
+//                            .padding(.top, 4)
+//                            .italic()
+//                        
+//                        Text(story)
+//                            .font(.system(size: 22))
+//                            .fontWeight(.medium)
+//                            .foregroundColor(.white)
+//                            .padding(.leading, 20)
+//                            .padding(.trailing, 0)
+//                            .padding(.top, 0)
+//                            .lineSpacing(0)
+//                        
+//                        Spacer()
+//                    }
+//                    .padding(.top)
+//                }
+//            }
+//            
+//            .navigationTitle("")
+//            .navigationBarTitleDisplayMode(.inline)
+////            .toolbar {
+////                ToolbarItem(placement: .navigationBarTrailing) {
+////                    NavigationLink(
+////                        destination: NextViewDate(
+////                            imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
+////                            title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
+////                            genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
+////                            synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
+////                            story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
+////                            currentIndex: (currentIndex + 1) % viewModel.stories.count,
+////                            selectedStoryIndex: $selectedStoryIndex,
+////                            viewModel: viewModel
+////                        ),
+////                        isActive: $navigateToNext
+////                    ) {
+////                        HStack(spacing: 4) {
+////                            Text("Next")
+////                            Image(systemName: "chevron.right")
+////                        }
+////                        .foregroundColor(.blue)
+////                    }
+////                }
+////            }
+//            .padding([.top, .trailing], 16)
+//        }
+//        .navigationTitle("")
+//        .navigationBarHidden(false)
+//        .gesture(
+//            DragGesture()
+//                .onChanged { value in
+//                    dragAmount = value.translation.width
+//                }
+//                .onEnded { value in
+//                    // Swipe left (forward): Navigate to next story
+//                    if dragAmount < -50 {
+//                        navigateToNext = true
+//                    }
+//                    // Swipe right (backward): Go back (dismiss the view)
+//                    else if dragAmount > 50 {
+//                        presentationMode.wrappedValue.dismiss()
+//                    }
+//                }
+//        )
+//    }
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//struct NextViewDate: View {
+//    var imageUrl: String
+//    var title: String
+//    var genre: String
+//    var synopsis: String
+//    var story: String
+//    
+//    var currentIndex: Int
+//    @Binding var selectedStoryIndex: Int?
+//    var viewModel: NewViewModel  // Receive viewModel
+//    
+//    @Environment(\.presentationMode) var presentationMode
+//    
+//    @State private var dragAmount: CGFloat = 0
+//    @State private var navigateToNext = false
+//
+//    var body: some View {
+//        ZStack {
+//            Color.black.edgesIgnoringSafeArea(.all)
+//
+//            VStack{
+//                ScrollView {
+//                    VStack(alignment: .leading) {
+//                        AsyncImage(url: URL(string: imageUrl)) { phase in
+//                            switch phase {
+//                            case .empty:
+//                                Color.gray.frame(height: 300)
+//                            case .success(let image):
+//                                image
+//                                    .resizable()
+//                                    .scaledToFit()
+//                                    .frame(maxWidth: .infinity)
+//                                    .clipped()
+//                            case .failure:
+//                                Color.gray.frame(height: 300)
+//                            @unknown default:
+//                                EmptyView()
+//                            }
+//                        }
+//                        
+//                        Text(title)
+//                            .font(.largeTitle)
+//                            .fontWeight(.bold)
+//                            .foregroundColor(.white)
+//                            .padding(.horizontal, 20)
+//                        
+//                        Text(genre)
+//                            .font(.title2)
+//                            .foregroundColor(.white.opacity(0.8))
+//                            .padding(.horizontal, 20)
+//                        
+//                        Text(synopsis)
+//                            .font(.body)
+//                            .foregroundColor(.white.opacity(0.8))
+//                            .padding(.horizontal, 20)
+//                            .padding(.top, 4)
+//                            .italic()
+//                        
+//                        Text(story)
+//                            .font(.system(size: 22))
+//                            .fontWeight(.medium)
+//                            .foregroundColor(.white)
+//                            .padding(.horizontal, 20)
+//                            .padding(.top, 0)
+//                            .lineSpacing(0)
+//
+//                        Spacer()
+//                    }
+//                    .padding(.top)
+//                }
+//            }
+//            
+//            .navigationTitle("")
+//            .navigationBarTitleDisplayMode(.inline)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    NavigationLink(
+//                        destination: NextViewDate(
+//                            imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
+//                            title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
+//                            genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
+//                            synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
+//                            story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
+//                            currentIndex: (currentIndex + 1) % viewModel.stories.count,
+//                            selectedStoryIndex: $selectedStoryIndex,
+//                            viewModel: viewModel
+//                        ),
+//                        isActive: $navigateToNext
+//                    ) {
+//                        Label("Next", systemImage: "chevron.right")
+//                            .labelStyle(TitleAndIconLabelStyle())
+//                            .font(.headline)
+//                            .foregroundColor(.white)
+//                            .padding()
+//                            .background(Color.blue)
+//                            .cornerRadius(8)
+//                            .shadow(radius: 5)
+//                    }
+//                }
+//            }
+//            .padding([.top, .trailing], 16)
+//        }
+//        .navigationTitle("")
+//        .navigationBarHidden(false)
+//        .gesture(
+//            DragGesture()
+//                .onChanged { value in
+//                    dragAmount = value.translation.width
+//                }
+//                .onEnded { value in
+//                    // Swipe left (forward): Navigate to next story
+//                    if dragAmount < -50 {
+//                        navigateToNext = true
+//                    }
+//                    // Swipe right (backward): Go back (dismiss the view)
+//                    else if dragAmount > 50 {
+//                        presentationMode.wrappedValue.dismiss()
+//                    }
+//                }
+//        )
+//    }
+//}
 
 
 
