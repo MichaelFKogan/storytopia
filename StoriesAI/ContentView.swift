@@ -286,8 +286,8 @@ struct HomeView: View {
 //                                    .id(scrollToTopID)
                                 
                                 VStack {
-                                    Text("AI Generated Short Stories")
-                                        .font(.custom("Futura", size: 18))
+                                    Text("All Stories And Images Are AI Generated")
+                                        .font(.custom("Futura", size: 16))
                                         .fontWeight(.medium)
                                         .foregroundColor(.white)
                                         .padding(.top, 0)
@@ -562,17 +562,20 @@ struct StoryView: View {
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                         
                         Text(genre)
                             .font(.title2)
                             .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                         
                         Text(synopsis)
                             .font(.body)
                             .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                             .padding(.top, 4)
                             .italic()
                         
@@ -590,7 +593,8 @@ struct StoryView: View {
                                 .font(.system(size: 22))
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 20)
+                                .padding(.leading, 20)
+                                .padding(.trailing, 0)
                                 .padding(.top, 10)
                                 .lineSpacing(0)
                         }
@@ -604,11 +608,12 @@ struct StoryView: View {
                                 .padding(.horizontal, 20)
                                 .padding(.top, 20)
                             
-                            Text("Get unlimited access to all stories. \n$9.99/month. Cancel anytime.")
-                                .font(.body)
-                                .foregroundColor(.white.opacity(0.8))
-                                .multilineTextAlignment(.center)
-                                .padding()
+                            Text("$9.99/month")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 5)
                             
                             Button(action: {
                                 // Add subscription logic here
@@ -621,6 +626,18 @@ struct StoryView: View {
                                     .cornerRadius(10)
                                     .padding(.top, 10)
                             }
+                            Text("Get unlimited access to all stories.")
+                                .font(.body)
+                                .foregroundColor(.white.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 10)
+                                .padding(.bottom, 0)
+                            
+                            Text("Cancel anytime.")
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 0)
                         }
                         .padding(.top, 20)
                         .padding(.bottom, 30)
@@ -632,7 +649,8 @@ struct StoryView: View {
                                 .font(.system(size: 22))
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 20)
+                                .padding(.leading, 20)
+                                .padding(.trailing, 0)
                                 .padding(.top, 10)
                                 .lineSpacing(0)
                                 .blur(radius: 5) // Apply blur effect
@@ -747,17 +765,20 @@ struct NextView: View {
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                         
                         Text(genre)
                             .font(.title2)
                             .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                         
                         Text(synopsis)
                             .font(.body)
                             .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                             .padding(.top, 4)
                             .italic()
                         
@@ -765,7 +786,8 @@ struct NextView: View {
                             .font(.system(size: 22))
                             .fontWeight(.medium)
                             .foregroundColor(.white)
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                             .padding(.top, 0)
                             .lineSpacing(0)
                         
@@ -883,17 +905,20 @@ struct StoryViewDate: View {
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                         
                         Text(genre)
                             .font(.title2)
                             .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                         
                         Text(synopsis)
                             .font(.body)
                             .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                             .padding(.top, 4)
                             .italic()
                         
@@ -901,7 +926,8 @@ struct StoryViewDate: View {
                             .font(.system(size: 22))
                             .fontWeight(.medium)
                             .foregroundColor(.white)
-                            .padding(.horizontal, 20)
+                            .padding(.leading, 20)
+                            .padding(.trailing, 0)
                             .padding(.top, 0)
                             .lineSpacing(0)
                         
@@ -1132,17 +1158,23 @@ struct RandomView: View {
                                 .font(.largeTitle)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 20)
+                                .padding(.leading, 20)
+                                .padding(.trailing, 0)
+
                             
                             Text(story.genre)
                                 .font(.title2)
                                 .foregroundColor(.white.opacity(0.8))
-                                .padding(.horizontal, 20)
+                                .padding(.leading, 20) // Add padding to the left
+                                .padding(.trailing, 0) // Remove padding on the right
+
                             
                             Text(story.synopsis ?? "")
                                 .font(.body)
                                 .foregroundColor(.white.opacity(0.8))
-                                .padding(.horizontal, 20)
+                                .padding(.leading, 20) // Add padding to the left
+                                .padding(.trailing, 0) // Remove padding on the right
+
                                 .padding(.top, 4)
                                 .italic()
                             
@@ -1150,7 +1182,8 @@ struct RandomView: View {
                                 .font(.system(size: 22))
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 20)
+                                .padding(.leading, 20) // Add padding to the left
+                                .padding(.trailing, 0) // Remove padding on the right
                                 .padding(.top, 0)
                                 .lineSpacing(0)
                         }
@@ -1177,13 +1210,22 @@ struct RandomView: View {
                     Button(action: {
                         loadRandomStory() // Load a new random story when pressed
                     }) {
-                        Text("Next")
-                            .font(.system(size: 16))
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.blue.opacity(0.7))
-                            .cornerRadius(12)
-                            .shadow(radius: 10)
+                        HStack(spacing: 8) { // Add spacing between the icon and the text
+                            
+                            Text("Shuffle")
+                                .font(.system(size: 16))
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: "chevron.right") // Shuffle icon
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                            
+                        }
+                        .padding()
+                        .background(Color.blue.opacity(0.7))
+                        .cornerRadius(12)
+                        .shadow(radius: 10)
                     }
                     .padding(.bottom, 20) // Add some bottom padding for the button
                     .padding(.trailing, 20) // Add some trailing padding to place it on the right
