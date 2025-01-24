@@ -529,23 +529,17 @@ struct StoryView: View {
     @State private var showPopup = false // State for showing the popup
     @State private var scrollOffset: CGFloat = 0
     
+    // Split the story into paragraphs
+     private var paragraphs: [String] {
+         return story.components(separatedBy: "\n").filter { !$0.isEmpty }
+     }
+    
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
 
             VStack {
                 ScrollView {
-                    GeometryReader { geometry in
-                        Color.clear
-                            .onChange(of: geometry.frame(in: .named("scroll")).minY) { offset in
-                                let totalScrollHeight = geometry.size.height
-                                let halfScrollHeight = totalScrollHeight * 0.5
-                                if offset < -halfScrollHeight {
-                                    showPopup = true // Show the popup at 50% scroll
-                                }
-                            }
-                    }
-                    .frame(height: 0) // GeometryReader should not affect layout
                     VStack(alignment: .leading) {
                         AsyncImage(url: URL(string: imageUrl)) { phase in
                             switch phase {
@@ -582,13 +576,67 @@ struct StoryView: View {
                             .padding(.top, 4)
                             .italic()
                         
-                        Text(story)
-                            .font(.system(size: 22))
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 0)
-                            .lineSpacing(0)
+//                        Text(story)
+//                            .font(.system(size: 22))
+//                            .fontWeight(.medium)
+//                            .foregroundColor(.white)
+//                            .padding(.horizontal, 20)
+//                            .padding(.top, 0)
+//                            .lineSpacing(0)
+                        
+                        // Display first 5 paragraphs without blur
+                        ForEach(0..<min(paragraphs.count, 5), id: \.self) { index in
+                            Text(paragraphs[index])
+                                .font(.system(size: 22))
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 10)
+                                .lineSpacing(0)
+                        }
+                        
+                        // Subscription Text and Button
+                        VStack {
+                            Text("Subscribe for Full Access")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 20)
+                            
+                            Text("Get unlimited access to all stories. \n$9.99/month. Cancel anytime.")
+                                .font(.body)
+                                .foregroundColor(.white.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .padding()
+                            
+                            Button(action: {
+                                // Add subscription logic here
+                            }) {
+                                Text("Subscribe Now")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .cornerRadius(10)
+                                    .padding(.top, 10)
+                            }
+                        }
+                        .padding(.top, 20)
+                        .padding(.bottom, 30)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        // Display paragraphs after the 5th with blur
+                        ForEach(5..<paragraphs.count, id: \.self) { index in
+                            Text(paragraphs[index])
+                                .font(.system(size: 22))
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 10)
+                                .lineSpacing(0)
+                                .blur(radius: 5) // Apply blur effect
+                        }
                         
                         Spacer()
                     }
