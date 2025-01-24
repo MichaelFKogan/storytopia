@@ -1037,13 +1037,27 @@ struct StoryViewDate: View {
 
 
 
+
+
+
+
 struct RandomView: View {
     @EnvironmentObject var viewModel: StoryViewModel
     @State private var randomStory: Story?
     @Binding var selectedTab: Int
-    
+
+    // State for subscription
+    @EnvironmentObject var storeManager: StoreManager  // Shared instance
+
     @State private var dragAmount: CGFloat = 0
     @State private var navigateToNext = false
+    
+    // Split the story into paragraphs
+    private var paragraphs: [String] {
+        guard let story = randomStory else { return [] }
+        return story.story.components(separatedBy: "\n").filter { !$0.isEmpty }
+    }
+
 
     var body: some View {
         ZStack {
@@ -1062,39 +1076,104 @@ struct RandomView: View {
                                 @unknown default: EmptyView()
                                 }
                             }
-
+                            
                             Text(story.title)
                                 .font(.largeTitle)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
                                 .padding(.leading, 20)
                                 .padding(.trailing, 0)
-
+                            
                             
                             Text(story.genre)
                                 .font(.title2)
                                 .foregroundColor(.white.opacity(0.8))
                                 .padding(.leading, 20) // Add padding to the left
                                 .padding(.trailing, 0) // Remove padding on the right
-
+                            
                             
                             Text(story.synopsis ?? "")
                                 .font(.body)
                                 .foregroundColor(.white.opacity(0.8))
                                 .padding(.leading, 20) // Add padding to the left
                                 .padding(.trailing, 0) // Remove padding on the right
-
+                            
                                 .padding(.top, 4)
                                 .italic()
                             
-                            Text(story.story)
-                                .font(.system(size: 22))
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                                .padding(.leading, 20) // Add padding to the left
-                                .padding(.trailing, 0) // Remove padding on the right
-                                .padding(.top, 0)
-                                .lineSpacing(0)
+                            
+                            ForEach(0..<min(paragraphs.count, 5), id: \.self) { index in
+                                Text(paragraphs[index])
+                                    .font(.system(size: 22))
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.white)
+                                    .padding(.leading, 20)
+                                    .padding(.trailing, 0)
+                                    .padding(.top, 10)
+                                    .lineSpacing(0)
+                            }
+                        
+
+                            VStack {
+                                Text("Subscribe for Full Access")
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 20)
+                                
+                                Text("$9.99/month")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 5)
+                                
+                                Button(action: {
+                                    if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                                        storeManager.purchase(product: product)
+                                    }
+                                }) {
+                                    Text("Subscribe Now")
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background(Color.blue)
+                                        .cornerRadius(10)
+                                        .padding(.top, 10)
+                                }
+                                
+                                Text("Get unlimited access to all stories.")
+                                    .font(.body)
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.top, 10)
+                                    .padding(.bottom, 0)
+                                
+                                Text("Cancel anytime.")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.top, 0)
+                            }
+                            .padding(.top, 20)
+                            .padding(.bottom, 30)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        
+                            ForEach(5..<paragraphs.count, id: \.self) { index in
+                                Text(paragraphs[index])
+                                    .font(.system(size: 22))
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.white)
+                                    .padding(.leading, 20)
+                                    .padding(.trailing, 0)
+                                    .padding(.top, 10)
+                                    .lineSpacing(0)
+                                    .blur(radius: storeManager.isSubscribed ? 0 : 5) // Remove blur if subscribed
+                            }
+                            
+  
                         }
                         .padding()
                     }
@@ -1120,16 +1199,16 @@ struct RandomView: View {
                         loadRandomStory() // Load a new random story when pressed
                     }) {
                         HStack(spacing: 8) { // Add spacing between the icon and the text
-                            
+
                             Text("Shuffle")
                                 .font(.system(size: 16))
                                 .fontWeight(.medium)
                                 .foregroundColor(.white)
-                            
+
                             Image(systemName: "chevron.right") // Shuffle icon
                                 .font(.system(size: 14))
                                 .foregroundColor(.white)
-                            
+
                         }
                         .padding()
                         .background(Color.blue.opacity(0.7))
@@ -1160,6 +1239,152 @@ struct RandomView: View {
         randomStory = viewModel.stories.randomElement()
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//struct RandomView: View {
+//    @EnvironmentObject var viewModel: StoryViewModel
+//    @State private var randomStory: Story?
+//    @Binding var selectedTab: Int
+//    
+//    // State for subscription
+//    @EnvironmentObject var storeManager: StoreManager  // Shared instance
+//    
+//    @State private var dragAmount: CGFloat = 0
+//    @State private var navigateToNext = false
+//
+//    var body: some View {
+//        ZStack {
+//            Color.black.edgesIgnoringSafeArea(.all)
+//
+//            if let story = randomStory {
+//                VStack {
+//                    // Display the story content
+//                    ScrollView {
+//                        VStack(alignment: .leading) {
+//                            AsyncImage(url: URL(string: story.url ?? "")) { phase in
+//                                switch phase {
+//                                case .empty: Color.gray.frame(height: 300)
+//                                case .success(let image): image.resizable().scaledToFit().frame(maxWidth: .infinity)
+//                                case .failure: Color.gray.frame(height: 300)
+//                                @unknown default: EmptyView()
+//                                }
+//                            }
+//
+//                            Text(story.title)
+//                                .font(.largeTitle)
+//                                .fontWeight(.bold)
+//                                .foregroundColor(.white)
+//                                .padding(.leading, 20)
+//                                .padding(.trailing, 0)
+//
+//                            
+//                            Text(story.genre)
+//                                .font(.title2)
+//                                .foregroundColor(.white.opacity(0.8))
+//                                .padding(.leading, 20) // Add padding to the left
+//                                .padding(.trailing, 0) // Remove padding on the right
+//
+//                            
+//                            Text(story.synopsis ?? "")
+//                                .font(.body)
+//                                .foregroundColor(.white.opacity(0.8))
+//                                .padding(.leading, 20) // Add padding to the left
+//                                .padding(.trailing, 0) // Remove padding on the right
+//
+//                                .padding(.top, 4)
+//                                .italic()
+//                            
+//                            Text(story.story)
+//                                .font(.system(size: 22))
+//                                .fontWeight(.medium)
+//                                .foregroundColor(.white)
+//                                .padding(.leading, 20) // Add padding to the left
+//                                .padding(.trailing, 0) // Remove padding on the right
+//                                .padding(.top, 0)
+//                                .lineSpacing(0)
+//                        }
+//                        .padding()
+//                    }
+//
+//                    Spacer() // Push everything up to leave space at the bottom
+//                }
+//            } else if viewModel.stories.isEmpty {
+//                ProgressView().progressViewStyle(CircularProgressViewStyle())
+//            } else {
+//                ProgressView()
+//                    .onAppear {
+//                        loadRandomStory() // Load a random story when the view appears
+//                    }
+//            }
+//
+//            // "Next" Button positioned at the bottom right, above the TabView shuffle button
+//            VStack {
+//                Spacer() // Push the button to the bottom
+//
+//                HStack {
+//                    Spacer() // Push the button to the right
+//                    Button(action: {
+//                        loadRandomStory() // Load a new random story when pressed
+//                    }) {
+//                        HStack(spacing: 8) { // Add spacing between the icon and the text
+//                            
+//                            Text("Shuffle")
+//                                .font(.system(size: 16))
+//                                .fontWeight(.medium)
+//                                .foregroundColor(.white)
+//                            
+//                            Image(systemName: "chevron.right") // Shuffle icon
+//                                .font(.system(size: 14))
+//                                .foregroundColor(.white)
+//                            
+//                        }
+//                        .padding()
+//                        .background(Color.blue.opacity(0.7))
+//                        .cornerRadius(12)
+//                        .shadow(radius: 10)
+//                    }
+//                    .padding(.bottom, 20) // Add some bottom padding for the button
+//                    .padding(.trailing, 20) // Add some trailing padding to place it on the right
+//                }
+//            }
+//        }
+//        .gesture(
+//                    DragGesture()
+//                        .onChanged { value in
+//                            dragAmount = value.translation.width
+//                        }
+//                        .onEnded { value in
+//                            // Trigger action only for a left swipe (negative dragAmount)
+//                            if dragAmount < -50 {
+//                                loadRandomStory()
+//                            }
+//                        }
+//                )
+//    }
+//
+//    // Function to load a random story
+//    private func loadRandomStory() {
+//        randomStory = viewModel.stories.randomElement()
+//    }
+//}
 
 
 
