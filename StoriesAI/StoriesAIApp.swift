@@ -45,19 +45,16 @@ class StoreManager: NSObject, ObservableObject {
 
     // Restore purchases
     func restorePurchases() {
-        // Restore purchases and update isSubscribed only if necessary
-        if purchasedProductIDs.contains("storytopia_monthly_subscription") {
-            isSubscribed = true
-        } else {
-            isSubscribed = false
-        }
-        print("Restored purchases. isSubscribed: \(isSubscribed)")
+        SKPaymentQueue.default().restoreCompletedTransactions() // Restore transactions from App Store
+        print("Restore purchases initiated.")
     }
+
 
     // Unlock content by marking the product ID as purchased
     private func unlockContent(for productID: String) {
         DispatchQueue.main.async {
             self.purchasedProductIDs.insert(productID)
+            self.isSubscribed = true
         }
     }
 }
@@ -74,15 +71,10 @@ extension StoreManager: SKPaymentTransactionObserver {
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
             switch transaction.transactionState {
-            case .purchased:
+            case .purchased, .restored:
                 let productID = transaction.payment.productIdentifier
-                unlockContent(for: productID) // Unlock content
-                SKPaymentQueue.default().finishTransaction(transaction) // Finish transaction
-
-            case .restored:
-                let productID = transaction.payment.productIdentifier
-                unlockContent(for: productID) // Restore content
-                SKPaymentQueue.default().finishTransaction(transaction)
+                unlockContent(for: productID) // Unlock content for purchased or restored
+                SKPaymentQueue.default().finishTransaction(transaction) // Finish the transaction
 
             case .failed:
                 if let error = transaction.error as NSError? {
@@ -96,13 +88,27 @@ extension StoreManager: SKPaymentTransactionObserver {
     }
 }
 
+
+
+
 @main
 struct StoriesAIApp: App {
     @StateObject private var storeManager = StoreManager()
+
+    init() {
+        // Fetch subscription status when the app launches
+        storeManager.fetchSubscriptionStatus()
+        print("App launched. isSubscribed: \(storeManager.isSubscribed)")
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(storeManager)
+                .onAppear {
+                    // Print subscription status when the main view appears
+                    print("isSubscribed (onAppear): \(storeManager.isSubscribed)")
+                }
         }
     }
 }
