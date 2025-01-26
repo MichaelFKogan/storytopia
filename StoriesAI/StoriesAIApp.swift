@@ -17,12 +17,18 @@ class StoreManager: NSObject, ObservableObject {
 
     override init() {
         super.init()
-        SKPaymentQueue.default().add(self) // Add observer here
+        SKPaymentQueue.default().add(self)
     }
 
     deinit {
         SKPaymentQueue.default().remove(self) // Remove observer to avoid memory leaks
     }
+    
+    // Fetch subscription status and products
+  func initializeSubscription() {
+      fetchSubscriptionStatus()
+      fetchProducts(productIDs: ["storytopia_monthly_subscription"])
+  }
     
     func fetchSubscriptionStatus() {
         // Fetch the subscription status from your server or locally.
@@ -45,7 +51,8 @@ class StoreManager: NSObject, ObservableObject {
 
     // Restore purchases
     func restorePurchases() {
-        SKPaymentQueue.default().restoreCompletedTransactions() // Restore transactions from App Store
+        SKPaymentQueue.default().restoreCompletedTransactions()
+        checkSubscriptionExpiry()
         print("Restore purchases initiated.")
     }
 
@@ -54,7 +61,19 @@ class StoreManager: NSObject, ObservableObject {
     private func unlockContent(for productID: String) {
         DispatchQueue.main.async {
             self.purchasedProductIDs.insert(productID)
-            self.isSubscribed = true
+            self.isSubscribed = true // Set to true for subscribed users
+        }
+    }
+    
+    func checkSubscriptionExpiry() {
+        // Fetch the latest receipt from the device
+        if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
+           FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
+            // Validate the receipt with Apple's servers (server-side recommended)
+            // If the subscription is expired, set isSubscribed to false
+            DispatchQueue.main.async {
+                self.isSubscribed = false
+            }
         }
     }
 }
@@ -94,12 +113,6 @@ extension StoreManager: SKPaymentTransactionObserver {
 @main
 struct StoriesAIApp: App {
     @StateObject private var storeManager = StoreManager()
-
-    init() {
-        // Fetch subscription status when the app launches
-        storeManager.fetchSubscriptionStatus()
-        print("App launched. isSubscribed: \(storeManager.isSubscribed)")
-    }
 
     var body: some Scene {
         WindowGroup {

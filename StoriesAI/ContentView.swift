@@ -242,7 +242,7 @@ extension Notification.Name {
 
 
 struct ContentView: View {
-    
+    @EnvironmentObject var storeManager: StoreManager  // Shared instance
     @StateObject private var viewModel = StoryViewModel()
     @State private var selectedTab: Int = 0
     
@@ -298,7 +298,20 @@ struct ContentView: View {
         }
         .environmentObject(viewModel)
         .onAppear {
-            viewModel.fetchStories() // Fetch stories once when the app starts
+            // Fetch subscription status and check expiry when the app launches
+               storeManager.fetchSubscriptionStatus()
+               storeManager.checkSubscriptionExpiry()
+               storeManager.initializeSubscription() // Initialize subscription logic
+               print("App launched. isSubscribed: \(storeManager.isSubscribed)")
+               viewModel.fetchStories() // Fetch stories once when the app starts
+               storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
+        }
+        .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
+            let newSubscriptionStatus = purchasedProductIDs.contains("storytopia_monthly_subscription")
+            if storeManager.isSubscribed != newSubscriptionStatus {
+                storeManager.isSubscribed = newSubscriptionStatus
+                print("isSubscribed: \(storeManager.isSubscribed)") // Print only when the status changes
+            }
         }
     }
 }
@@ -511,11 +524,6 @@ struct HomeView: View {
                 .navigationBarHidden(true)
                 .onAppear {
                     viewModel.fetchStories()
-                    storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
-                }
-                .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
-                    storeManager.isSubscribed = purchasedProductIDs.contains("storytopia_monthly_subscription")
-                    print("isSubscribed: \(storeManager.isSubscribed)") // Add this line for debugging
                 }
             }
             // Show the SubscriptionModal if showModal is true
@@ -608,9 +616,6 @@ struct SubscriptionModal: View {
             withAnimation {
                 showModal = false  // Close the modal if tapped outside
             }
-        }
-        .onAppear {
-            storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
         }
         .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
             if purchasedProductIDs.contains("storytopia_monthly_subscription") {
@@ -787,11 +792,6 @@ struct NewView: View {
                 .navigationBarHidden(true)
                 .onAppear {
                     viewModel.fetchStories()
-                    storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
-                }
-                .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
-                    storeManager.isSubscribed = purchasedProductIDs.contains("storytopia_monthly_subscription")
-                    print("isSubscribed: \(storeManager.isSubscribed)") // Add this line for debugging
                 }
             }
             // Show the SubscriptionModal if showModal is true
@@ -1018,13 +1018,6 @@ struct StoryView: View {
         .navigationTitle("")
         .navigationBarHidden(false)
         .gesture(dragGesture)
-        .onAppear {
-            storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
-        }
-        .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
-            storeManager.isSubscribed = purchasedProductIDs.contains("storytopia_monthly_subscription")
-            print("isSubscribed: \(storeManager.isSubscribed)") // Add this line for debugging
-        }
     }
     
     
@@ -1257,13 +1250,6 @@ struct StoryViewDate: View {
         .navigationTitle("")
         .navigationBarHidden(false)
         .gesture(dragGesture)
-        .onAppear {
-            storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
-        }
-        .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
-            storeManager.isSubscribed = purchasedProductIDs.contains("storytopia_monthly_subscription")
-            print("isSubscribed: \(storeManager.isSubscribed)") // Add this line for debugging
-        }
     }
 
     // ... other views ...
@@ -1664,11 +1650,6 @@ struct RandomView: View {
         )
         .onAppear {
             viewModel.fetchStories()
-            storeManager.fetchProducts(productIDs: ["storytopia_monthly_subscription"])
-        }
-        .onReceive(storeManager.$purchasedProductIDs) { purchasedProductIDs in
-            storeManager.isSubscribed = purchasedProductIDs.contains("storytopia_monthly_subscription")
-            print("isSubscribed: \(storeManager.isSubscribed)") // Add this line for debugging
         }
     }
     // Function to load a random story
