@@ -17,6 +17,7 @@ class StoreManager: NSObject, ObservableObject {
 
     override init() {
         super.init()
+        self.isSubscribed = false
         SKPaymentQueue.default().add(self)
     }
 
@@ -25,10 +26,10 @@ class StoreManager: NSObject, ObservableObject {
     }
     
     // Fetch subscription status and products
-  func initializeSubscription() {
-      fetchSubscriptionStatus()
-      fetchProducts(productIDs: ["storytopia_monthly_subscription"])
-  }
+      func initializeSubscription() {
+          fetchSubscriptionStatus()
+          fetchProducts(productIDs: ["storytopia_monthly_subscription"])
+      }
     
     func fetchSubscriptionStatus() {
         // Fetch the subscription status from your server or locally.

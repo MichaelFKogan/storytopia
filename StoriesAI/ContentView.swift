@@ -354,13 +354,24 @@ struct HomeView: View {
                                 Button(action: {
                                     showModal.toggle()  // Show the modal when button is tapped
                                 }) {
-                                    Text("Subscribe Now")
-                                        .font(.custom("Futura", size: 15))
-                                        .fontWeight(.regular)
-                                        .foregroundColor(.white)
-                                        .padding(.top, 20)
-                                        .padding(.trailing, 20)
-                                        .padding(.bottom, 10)
+                                    if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }),
+                                       let introductoryPrice = product.introductoryPrice {
+                                        Text("7-Day Free Trial")
+                                            .font(.custom("Futura", size: 15))
+                                            .fontWeight(.regular)
+                                            .foregroundColor(.white)
+                                            .padding(.top, 20)
+                                            .padding(.trailing, 20)
+                                            .padding(.bottom, 10)
+                                    }else{
+                                        Text("Subscribe Now")
+                                            .font(.custom("Futura", size: 15))
+                                            .fontWeight(.regular)
+                                            .foregroundColor(.white)
+                                            .padding(.top, 20)
+                                            .padding(.trailing, 20)
+                                            .padding(.bottom, 10)
+                                    }
                                 }
                             }
                         }
@@ -385,7 +396,7 @@ struct HomeView: View {
                                         //                                    .id(scrollToTopID)
                                         
                                         VStack {
-                                            Text("All Stories And Images Are AI Generated")
+                                            Text("AI-Generated Short Stories")
                                                 .font(.custom("Futura", size: 16))
                                                 .fontWeight(.medium)
                                                 .foregroundColor(.white)
@@ -548,33 +559,85 @@ struct SubscriptionModal: View {
     var body: some View {
         VStack {
             VStack {
-                Text("Subscribe for Full Access")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
                 
-                Text("$9.99/month")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 5)
-                
-                Button(action: {
-                    if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
-                        storeManager.purchase(product: product)
-                    }
-                }) {
-                    Text("Subscribe Now")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(10)
-                        .padding(.top, 10)
-                }
+                // Check if the user is eligible for the free trial
+                 if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }),
+                    let introductoryPrice = product.introductoryPrice {
+                     
+                     Text("7-Day Free Trial")
+                         .font(.largeTitle)
+                         .fontWeight(.bold)
+                         .foregroundColor(.white)
+                         .padding(.horizontal, 20)
+                         .padding(.top, 20)
+                     
+                     Text("Then \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month")
+                         .font(.title2)
+                         .fontWeight(.semibold)
+                         .foregroundColor(.white)
+                         .padding(.horizontal, 20)
+                         .padding(.top, 5)
+                     
+                     // Additional description for the free trial
+                     Text("You'll get full access to all stories for 7 days. After the trial, your subscription will automatically renew for \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month unless canceled.")
+                         .font(.subheadline)
+                         .foregroundColor(.white.opacity(0.8))
+                         .multilineTextAlignment(.center)
+                         .padding(.horizontal, 20)
+                         .padding(.top, 10)
+                     
+                     Text("To avoid charges, cancel anytime before the trial ends in your Apple ID settings.")
+                         .font(.footnote)
+                         .foregroundColor(.white.opacity(0.8))
+                         .multilineTextAlignment(.center)
+                         .padding(.horizontal, 20)
+                         .padding(.top, 5)
+                     
+                     Button(action: {
+                         if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                             storeManager.purchase(product: product)
+                         }
+                     }) {
+                         Text("Start Free Trial")
+                             .font(.headline)
+                             .foregroundColor(.white)
+                             .padding()
+                             .background(Color.blue)
+                             .cornerRadius(10)
+                             .padding(.top, 10)
+                     }
+                     
+                 } else {
+                     Text("Subscribe for Full Access")
+                         .font(.largeTitle)
+                         .fontWeight(.bold)
+                         .foregroundColor(.white)
+                         .padding(.horizontal, 20)
+                         .padding(.top, 20)
+                         .multilineTextAlignment(.center)
+                     
+                     Text("$9.99/month")
+                         .font(.title2)
+                         .fontWeight(.semibold)
+                         .foregroundColor(.white)
+                         .padding(.horizontal, 20)
+                         .padding(.top, 5)
+                     
+                     Button(action: {
+                         if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                             storeManager.purchase(product: product)
+                         }
+                     }) {
+                         Text("Subscribe Now")
+                             .font(.headline)
+                             .foregroundColor(.white)
+                             .padding()
+                             .background(Color.blue)
+                             .cornerRadius(10)
+                             .padding(.top, 10)
+                     }
+                     
+                 }
                 
                 Text("Get unlimited access to all stories.")
                     .font(.body)
@@ -657,13 +720,24 @@ struct NewView: View {
                                 Button(action: {
                                     showModal.toggle()  // Show the modal when button is tapped
                                 }) {
-                                    Text("Subscribe Now")
-                                        .font(.custom("Futura", size: 15))
-                                        .fontWeight(.regular)
-                                        .foregroundColor(.white)
-                                        .padding(.top, 20)
-                                        .padding(.trailing, 20)
-                                        .padding(.bottom, 10)
+                                    if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }),
+                                       let introductoryPrice = product.introductoryPrice {
+                                        Text("7-Day Free Trial")
+                                            .font(.custom("Futura", size: 15))
+                                            .fontWeight(.regular)
+                                            .foregroundColor(.white)
+                                            .padding(.top, 20)
+                                            .padding(.trailing, 20)
+                                            .padding(.bottom, 10)
+                                    }else{
+                                        Text("Subscribe Now")
+                                            .font(.custom("Futura", size: 15))
+                                            .fontWeight(.regular)
+                                            .foregroundColor(.white)
+                                            .padding(.top, 20)
+                                            .padding(.trailing, 20)
+                                            .padding(.bottom, 10)
+                                    }
                                 }
                             }
                         }
@@ -1046,7 +1120,7 @@ struct StoryView: View {
     }
     
     private var storyParagraphsView: some View {
-        ForEach(0..<min(paragraphs.count, 5), id: \.self) { index in
+        ForEach(0..<min(paragraphs.count, 3), id: \.self) { index in
             Text(paragraphs[index])
                 .font(.system(size: 22))
                 .fontWeight(.medium)
@@ -1060,33 +1134,84 @@ struct StoryView: View {
     
     private var subscriptionView: some View {
         VStack {
-            Text("Subscribe for Full Access")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-            
-            Text("$9.99/month")
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.top, 5)
-            
-            Button(action: {
-                if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
-                    storeManager.purchase(product: product)
-                }
-            }) {
-                Text("Subscribe Now")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-                    .padding(.top, 10)
-            }
+            // Check if the user is eligible for the free trial
+             if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }),
+                let introductoryPrice = product.introductoryPrice {
+                 
+                 Text("7-Day Free Trial")
+                     .font(.largeTitle)
+                     .fontWeight(.bold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 20)
+                 
+                 Text("Then \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month")
+                     .font(.title2)
+                     .fontWeight(.semibold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 // Additional description for the free trial
+                 Text("You'll get full access to all stories for 7 days. After the trial, your subscription will automatically renew for \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month unless canceled.")
+                     .font(.subheadline)
+                     .foregroundColor(.white.opacity(0.8))
+                     .multilineTextAlignment(.center)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 10)
+                 
+                 Text("To avoid charges, cancel anytime before the trial ends in your Apple ID settings.")
+                     .font(.footnote)
+                     .foregroundColor(.white.opacity(0.8))
+                     .multilineTextAlignment(.center)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 Button(action: {
+                     if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                         storeManager.purchase(product: product)
+                     }
+                 }) {
+                     Text("Start Free Trial")
+                         .font(.headline)
+                         .foregroundColor(.white)
+                         .padding()
+                         .background(Color.blue)
+                         .cornerRadius(10)
+                         .padding(.top, 10)
+                 }
+                 
+             } else {
+                 Text("Subscribe for Full Access")
+                     .font(.largeTitle)
+                     .fontWeight(.bold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 20)
+                     .multilineTextAlignment(.center)
+                 
+                 Text("$9.99/month")
+                     .font(.title2)
+                     .fontWeight(.semibold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 Button(action: {
+                     if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                         storeManager.purchase(product: product)
+                     }
+                 }) {
+                     Text("Subscribe Now")
+                         .font(.headline)
+                         .foregroundColor(.white)
+                         .padding()
+                         .background(Color.blue)
+                         .cornerRadius(10)
+                         .padding(.top, 10)
+                 }
+                 
+             }
             
             Text("Get unlimited access to all stories.")
                 .font(.body)
@@ -1107,7 +1232,7 @@ struct StoryView: View {
     }
     
     private var additionalStoryParagraphsView: some View {
-        ForEach(5..<paragraphs.count, id: \.self) { index in
+        ForEach(3..<paragraphs.count, id: \.self) { index in
             Text(paragraphs[index])
                 .font(.system(size: 22))
                 .fontWeight(.medium)
@@ -1278,7 +1403,7 @@ struct StoryViewDate: View {
     }
     
     private var storyParagraphsView: some View {
-        ForEach(0..<min(paragraphs.count, 5), id: \.self) { index in
+        ForEach(0..<min(paragraphs.count, 3), id: \.self) { index in
             Text(paragraphs[index])
                 .font(.system(size: 22))
                 .fontWeight(.medium)
@@ -1292,33 +1417,84 @@ struct StoryViewDate: View {
     
     private var subscriptionView: some View {
         VStack {
-            Text("Subscribe for Full Access")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-            
-            Text("$9.99/month")
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.top, 5)
-            
-            Button(action: {
-                if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
-                    storeManager.purchase(product: product)
-                }
-            }) {
-                Text("Subscribe Now")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-                    .padding(.top, 10)
-            }
+            // Check if the user is eligible for the free trial
+             if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }),
+                let introductoryPrice = product.introductoryPrice {
+                 
+                 Text("7-Day Free Trial")
+                     .font(.largeTitle)
+                     .fontWeight(.bold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 20)
+                 
+                 Text("Then \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month")
+                     .font(.title2)
+                     .fontWeight(.semibold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 // Additional description for the free trial
+                 Text("You'll get full access to all stories for 7 days. After the trial, your subscription will automatically renew for \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month unless canceled.")
+                     .font(.subheadline)
+                     .foregroundColor(.white.opacity(0.8))
+                     .multilineTextAlignment(.center)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 10)
+                 
+                 Text("To avoid charges, cancel anytime before the trial ends in your Apple ID settings.")
+                     .font(.footnote)
+                     .foregroundColor(.white.opacity(0.8))
+                     .multilineTextAlignment(.center)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 Button(action: {
+                     if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                         storeManager.purchase(product: product)
+                     }
+                 }) {
+                     Text("Start Free Trial")
+                         .font(.headline)
+                         .foregroundColor(.white)
+                         .padding()
+                         .background(Color.blue)
+                         .cornerRadius(10)
+                         .padding(.top, 10)
+                 }
+                 
+             } else {
+                 Text("Subscribe for Full Access")
+                     .font(.largeTitle)
+                     .fontWeight(.bold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 20)
+                     .multilineTextAlignment(.center)
+                 
+                 Text("$9.99/month")
+                     .font(.title2)
+                     .fontWeight(.semibold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 Button(action: {
+                     if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                         storeManager.purchase(product: product)
+                     }
+                 }) {
+                     Text("Subscribe Now")
+                         .font(.headline)
+                         .foregroundColor(.white)
+                         .padding()
+                         .background(Color.blue)
+                         .cornerRadius(10)
+                         .padding(.top, 10)
+                 }
+                 
+             }
             
             Text("Get unlimited access to all stories.")
                 .font(.body)
@@ -1339,7 +1515,7 @@ struct StoryViewDate: View {
     }
     
     private var additionalStoryParagraphsView: some View {
-        ForEach(5..<paragraphs.count, id: \.self) { index in
+        ForEach(3..<paragraphs.count, id: \.self) { index in
             Text(paragraphs[index])
                 .font(.system(size: 22))
                 .fontWeight(.medium)
@@ -1463,13 +1639,24 @@ struct RandomView: View {
                             Button(action: {
                                 showModal.toggle()  // Show the modal when button is tapped
                             }) {
-                                Text("Subscribe Now")
-                                    .font(.custom("Futura", size: 15))
-                                    .fontWeight(.regular)
-                                    .foregroundColor(.white)
-                                    .padding(.top, 20)
-                                    .padding(.trailing, 20)
-                                    .padding(.bottom, 10)
+                                if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }),
+                                   let introductoryPrice = product.introductoryPrice {
+                                    Text("7-Day Free Trial")
+                                        .font(.custom("Futura", size: 15))
+                                        .fontWeight(.regular)
+                                        .foregroundColor(.white)
+                                        .padding(.top, 20)
+                                        .padding(.trailing, 20)
+                                        .padding(.bottom, 10)
+                                }else{
+                                    Text("Subscribe Now")
+                                        .font(.custom("Futura", size: 15))
+                                        .fontWeight(.regular)
+                                        .foregroundColor(.white)
+                                        .padding(.top, 20)
+                                        .padding(.trailing, 20)
+                                        .padding(.bottom, 10)
+                                }
                             }
                         }
                     }
@@ -1510,7 +1697,7 @@ struct RandomView: View {
                                 .italic()
                             
                             
-                            ForEach(0..<min(paragraphs.count, 5), id: \.self) { index in
+                            ForEach(0..<min(paragraphs.count, 3), id: \.self) { index in
                                 Text(paragraphs[index])
                                     .font(.system(size: 22))
                                     .fontWeight(.medium)
@@ -1523,33 +1710,84 @@ struct RandomView: View {
                             
                             if !storeManager.isSubscribed {
                                 VStack {
-                                    Text("Subscribe for Full Access")
-                                        .font(.largeTitle)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 20)
-                                        .padding(.top, 20)
-                                    
-                                    Text("$9.99/month")
-                                        .font(.title)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 20)
-                                        .padding(.top, 5)
-                                    
-                                    Button(action: {
-                                        if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
-                                            storeManager.purchase(product: product)
-                                        }
-                                    }) {
-                                        Text("Subscribe Now")
-                                            .font(.headline)
-                                            .foregroundColor(.white)
-                                            .padding()
-                                            .background(Color.blue)
-                                            .cornerRadius(10)
-                                            .padding(.top, 10)
-                                    }
+                                    // Check if the user is eligible for the free trial
+                                     if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }),
+                                        let introductoryPrice = product.introductoryPrice {
+                                         
+                                         Text("7-Day Free Trial")
+                                             .font(.largeTitle)
+                                             .fontWeight(.bold)
+                                             .foregroundColor(.white)
+                                             .padding(.horizontal, 20)
+                                             .padding(.top, 20)
+                                         
+                                         Text("Then \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month")
+                                             .font(.title2)
+                                             .fontWeight(.semibold)
+                                             .foregroundColor(.white)
+                                             .padding(.horizontal, 20)
+                                             .padding(.top, 5)
+                                         
+                                         // Additional description for the free trial
+                                         Text("You'll get full access to all stories for 7 days. After the trial, your subscription will automatically renew for \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month unless canceled.")
+                                             .font(.subheadline)
+                                             .foregroundColor(.white.opacity(0.8))
+                                             .multilineTextAlignment(.center)
+                                             .padding(.horizontal, 20)
+                                             .padding(.top, 10)
+                                         
+                                         Text("To avoid charges, cancel anytime before the trial ends in your Apple ID settings.")
+                                             .font(.footnote)
+                                             .foregroundColor(.white.opacity(0.8))
+                                             .multilineTextAlignment(.center)
+                                             .padding(.horizontal, 20)
+                                             .padding(.top, 5)
+                                         
+                                         Button(action: {
+                                             if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                                                 storeManager.purchase(product: product)
+                                             }
+                                         }) {
+                                             Text("Start Free Trial")
+                                                 .font(.headline)
+                                                 .foregroundColor(.white)
+                                                 .padding()
+                                                 .background(Color.blue)
+                                                 .cornerRadius(10)
+                                                 .padding(.top, 10)
+                                         }
+                                         
+                                     } else {
+                                         Text("Subscribe for Full Access")
+                                             .font(.largeTitle)
+                                             .fontWeight(.bold)
+                                             .foregroundColor(.white)
+                                             .padding(.horizontal, 20)
+                                             .padding(.top, 20)
+                                             .multilineTextAlignment(.center)
+                                         
+                                         Text("$9.99/month")
+                                             .font(.title2)
+                                             .fontWeight(.semibold)
+                                             .foregroundColor(.white)
+                                             .padding(.horizontal, 20)
+                                             .padding(.top, 5)
+                                         
+                                         Button(action: {
+                                             if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                                                 storeManager.purchase(product: product)
+                                             }
+                                         }) {
+                                             Text("Subscribe Now")
+                                                 .font(.headline)
+                                                 .foregroundColor(.white)
+                                                 .padding()
+                                                 .background(Color.blue)
+                                                 .cornerRadius(10)
+                                                 .padding(.top, 10)
+                                         }
+                                         
+                                     }
                                     
                                     Text("Get unlimited access to all stories.")
                                         .font(.body)
@@ -1570,7 +1808,7 @@ struct RandomView: View {
                             }
                             
                             
-                            ForEach(5..<paragraphs.count, id: \.self) { index in
+                            ForEach(3..<paragraphs.count, id: \.self) { index in
                                 Text(paragraphs[index])
                                     .font(.system(size: 22))
                                     .fontWeight(.medium)
