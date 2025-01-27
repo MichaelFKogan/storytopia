@@ -174,6 +174,8 @@ class NewViewModel: ObservableObject {
 
 
 
+
+
 class GenreViewModel: ObservableObject {
     @Published var genres: [String: [String]] = [:] // Dictionary to store grouped genres
     
@@ -186,42 +188,91 @@ class GenreViewModel: ObservableObject {
         
         // Group genres by their root word(s)
         for genre in uniqueGenres {
-            let category = extractCategory(from: genre)
-            if genreDictionary[category] == nil {
-                genreDictionary[category] = []
+            let categories = extractCategories(from: genre) // Get all categories for this genre
+            for category in categories {
+                if genreDictionary[category] == nil {
+                    genreDictionary[category] = []
+                }
+                genreDictionary[category]?.append(genre)
             }
-            genreDictionary[category]?.append(genre)
         }
         
         // Sort categories alphabetically
         self.genres = genreDictionary
     }
     
-    // Helper function to extract the root word(s) from the genre string
-    private func extractCategory(from genre: String) -> String {
-        // Check if the genre contains "Slice Of Life"
-        if genre.contains("Slice of Life") {
-            return "Slice of Life"
-        }else if genre.contains("Urban Fantasy") {
-            return "Urban Fantasy"
-        }
-        
-        
-        // Split the genre string by spaces or "/"
-        let components = genre.components(separatedBy: .whitespacesAndNewlines)
-            .flatMap { $0.components(separatedBy: "/") }
+    // Helper function to extract all components from the genre string
+    func extractCategories(from genre: String) -> [String] {
+        // Split the genre string by "/" and trim whitespace
+        let components = genre.components(separatedBy: "/")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty } // Remove any empty strings
         
-        // Extract the root word(s) (e.g., "Sci-Fi", "Horror", "Post-Apocalyptic")
-        if components.count > 1 {
-            // If the genre contains multiple parts, take the first part as the root
-            return components[0]
-        } else {
-            // If the genre is a single word, use it as the root
-            return components[0]
-        }
+        return components
     }
 }
+
+
+
+
+
+//class GenreViewModel: ObservableObject {
+//    @Published var genres: [String: [String]] = [:] // Dictionary to store grouped genres
+//    
+//    // List of genres to hide
+//    private let hiddenGenres: Set<String> = ["Gothic", "Noir", "Heartwarming", "Fiction", "Contemporary", "Historical", "Steampunk", "Western", "Urban Fantasy", "Young Adult"]
+//    
+//    func fetchGenres(from stories: [Story]) {
+//        var genreDictionary: [String: [String]] = [:]
+//        
+//        // Extract all unique genres
+//        let allGenres = stories.map { $0.genre } // Map to array of genre strings
+//        let uniqueGenres = Array(Set(allGenres)) // Remove duplicates
+//        
+//        // Filter out hidden genres
+//        let filteredGenres = uniqueGenres.filter { genre in
+//            !hiddenGenres.contains(genre) && !hiddenGenres.contains(extractCategory(from: genre))
+//        }
+//        
+//        // Group genres by their root word(s)
+//        for genre in filteredGenres {
+//            let category = extractCategory(from: genre)
+//            if genreDictionary[category] == nil {
+//                genreDictionary[category] = []
+//            }
+//            genreDictionary[category]?.append(genre)
+//        }
+//        
+//        // Sort categories alphabetically
+//        self.genres = genreDictionary
+//    }
+//    
+//    // Helper function to extract the root word(s) from the genre string
+//    private func extractCategory(from genre: String) -> String {
+//        // Check if the genre contains "Slice Of Life"
+//        if genre.contains("Slice of Life") {
+//            return "Slice of Life"
+//        } else if genre.contains("Urban Fantasy") {
+//            return "Urban Fantasy"
+//        } else if genre.contains("Young Adult") {
+//            return "Young Adult"
+//        }
+//        
+//        // Split the genre string by spaces or "/"
+//        let components = genre.components(separatedBy: .whitespacesAndNewlines)
+//            .flatMap { $0.components(separatedBy: "/") }
+//            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+//        
+//        // Extract the root word(s) (e.g., "Sci-Fi", "Horror", "Post-Apocalyptic")
+//        if components.count > 1 {
+//            // If the genre contains multiple parts, take the first part as the root
+//            return components[0]
+//        } else {
+//            // If the genre is a single word, use it as the root
+//            return components[0]
+//        }
+//    }
+//}
 
 
 
@@ -883,12 +934,6 @@ struct NewView: View {
 
 
 
-
-
-
-
-
-
 struct GenreView: View {
     @EnvironmentObject var storyViewModel: StoryViewModel
     @StateObject private var genreViewModel = GenreViewModel()
@@ -900,7 +945,7 @@ struct GenreView: View {
                 VStack(spacing: 20) {
                     // Iterate over the grouped genres
                     ForEach(genreViewModel.genres.keys.sorted(), id: \.self) { category in
-                        NavigationLink(destination: GenreDetailView(category: category)) {
+                        NavigationLink(destination: GenreDetailView(category: category, genreViewModel: genreViewModel)) {
                             Text(category)
                                 .font(.custom("Futura", size: 24))
                                 .fontWeight(.heavy)
@@ -931,10 +976,9 @@ struct GenreView: View {
 
 
 
-
-
 struct GenreDetailView: View {
     var category: String
+    var genreViewModel: GenreViewModel // Add this line
     @EnvironmentObject var viewModel: StoryViewModel
     
     var body: some View {
@@ -947,7 +991,10 @@ struct GenreDetailView: View {
                     GridItem(.flexible())
                 ], spacing: 3) {
                     // Filter stories by the selected category
-                    ForEach(viewModel.stories.filter { $0.genre.hasPrefix(category) }, id: \.id) { story in
+                    ForEach(viewModel.stories.filter { story in
+                        let categories = genreViewModel.extractCategories(from: story.genre)
+                        return categories.contains(category)
+                    }, id: \.id) { story in
                         NavigationLink(destination: StoryView(
                             imageUrl: story.url ?? "",
                             title: story.title,
@@ -999,6 +1046,127 @@ struct GenreDetailView: View {
         .navigationTitle(category)
     }
 }
+
+
+
+
+
+
+
+
+
+
+//struct GenreView: View {
+//    @EnvironmentObject var storyViewModel: StoryViewModel
+//    @StateObject private var genreViewModel = GenreViewModel()
+//    
+//    var body: some View {
+//        ZStack {
+//            Color.black.edgesIgnoringSafeArea(.all)
+//            ScrollView {
+//                VStack(spacing: 20) {
+//                    // Iterate over the grouped genres
+//                    ForEach(genreViewModel.genres.keys.sorted(), id: \.self) { category in
+//                        NavigationLink(destination: GenreDetailView(category: category)) {
+//                            Text(category)
+//                                .font(.custom("Futura", size: 24))
+//                                .fontWeight(.heavy)
+//                                .foregroundColor(Color(hex: "#de9590"))
+////                                .shadow(color: Color(hex: "#275faa").opacity(1), radius: 0, x: 2, y: 2) // Shadow
+//                                .padding()
+//                                .frame(maxWidth: .infinity)
+//                                .background(Color.black)
+//                                .cornerRadius(10)
+//                                .overlay(
+//                                    RoundedRectangle(cornerRadius: 10)
+//                                        .stroke(Color(hex: "#275faa"), lineWidth: 2)
+//                                )
+//                        }
+//                    }
+//                }
+//                .padding()
+//            }
+//        }
+//        .onAppear {
+//            genreViewModel.fetchGenres(from: storyViewModel.stories)
+//        }
+//    }
+//}
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//struct GenreDetailView: View {
+//    var category: String
+//    @EnvironmentObject var viewModel: StoryViewModel
+//    
+//    var body: some View {
+//        ZStack {
+//            Color.black.edgesIgnoringSafeArea(.all)
+//            ScrollView {
+//                LazyVGrid(columns: [
+//                    GridItem(.flexible()),
+//                    GridItem(.flexible()),
+//                    GridItem(.flexible())
+//                ], spacing: 3) {
+//                    // Filter stories by the selected category
+//                    ForEach(viewModel.stories.filter { $0.genre.hasPrefix(category) }, id: \.id) { story in
+//                        NavigationLink(destination: StoryView(
+//                            imageUrl: story.url ?? "",
+//                            title: story.title,
+//                            genre: story.genre,
+//                            synopsis: story.synopsis ?? "",
+//                            story: story.story,
+//                            currentIndex: viewModel.stories.firstIndex(where: { $0.id == story.id }) ?? 0,
+//                            selectedStoryIndex: .constant(0),
+//                            viewModel: viewModel
+//                        )) {
+//                            ZStack {
+//                                AsyncImage(url: URL(string: story.url ?? "")) { phase in
+//                                    switch phase {
+//                                    case .empty:
+//                                        Color.gray
+//                                            .frame(width: UIScreen.main.bounds.width / 3, height: 200)
+//                                    case .success(let image):
+//                                        image
+//                                            .resizable()
+//                                            .scaledToFill()
+//                                            .frame(width: UIScreen.main.bounds.width / 3, height: 200)
+//                                            .clipped()
+//                                    case .failure:
+//                                        Color.gray
+//                                            .frame(width: UIScreen.main.bounds.width / 3, height: 200)
+//                                    @unknown default:
+//                                        EmptyView()
+//                                    }
+//                                }
+//                                
+//                                VStack {
+//                                    Spacer()
+//                                    Text(story.title)
+//                                        .font(.custom("AvenirNext-Bold", size: 14))
+//                                        .lineLimit(8)
+//                                        .foregroundColor(.white)
+//                                        .shadow(color: .black, radius: 2, x: 1, y: 1)
+//                                        .padding([.bottom, .leading], 10)
+//                                        .frame(maxWidth: .infinity, alignment: .leading)
+//                                        .multilineTextAlignment(.leading)
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//                .padding(.top, 20)
+//            }
+//        }
+//        .navigationTitle(category)
+//    }
+//}
 
 
 
