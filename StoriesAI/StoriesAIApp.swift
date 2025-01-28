@@ -12,6 +12,7 @@ class StoreManager: NSObject, ObservableObject {
     @Published var products: [SKProduct] = []
     @Published var purchasedProductIDs: Set<String> = []
     @Published var isSubscribed: Bool = false
+    
 
     private var productRequest: SKProductsRequest?
 
@@ -111,14 +112,72 @@ extension StoreManager: SKPaymentTransactionObserver {
 
 
 
+
+
+
+
+struct ConstrainedWidthModifier: ViewModifier {
+    let maxWidthForPadLandscape: CGFloat
+    let maxWidthForPadPortrait: CGFloat
+
+    func body(content: Content) -> some View {
+        GeometryReader { geometry in
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                let isLandscape = geometry.size.width > geometry.size.height
+                let deviceMaxWidth = isLandscape ? maxWidthForPadLandscape : maxWidthForPadPortrait
+
+                content
+                    .frame(
+                        width: geometry.size.width > deviceMaxWidth
+                            ? deviceMaxWidth
+                            : geometry.size.width
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(.systemBackground))
+                    .clipped()
+            } else {
+                content // No constraints for non-iPad devices
+            }
+        }
+    }
+}
+
+extension View {
+    func constrainedWidth(
+        maxWidthForPadLandscape: CGFloat,
+        maxWidthForPadPortrait: CGFloat
+    ) -> some View {
+        self.modifier(
+            ConstrainedWidthModifier(
+                maxWidthForPadLandscape: maxWidthForPadLandscape,
+                maxWidthForPadPortrait: maxWidthForPadPortrait
+            )
+        )
+    }
+}
+
+
+
+
+
+
+
+
 @main
 struct StoriesAIApp: App {
     @StateObject private var storeManager = StoreManager()
+    private let maxWidthForPadLandscape: CGFloat = 900 // Maximum width for iPad in landscape
+    private let maxWidthForPadPortrait: CGFloat = 800  // Maximum width for iPad in portrait
+
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(storeManager)
+                .constrainedWidth(
+                    maxWidthForPadLandscape: maxWidthForPadLandscape,
+                    maxWidthForPadPortrait: maxWidthForPadPortrait
+                )
                 .onAppear {
                     // Print subscription status when the main view appears
                     print("isSubscribed (onAppear): \(storeManager.isSubscribed)")

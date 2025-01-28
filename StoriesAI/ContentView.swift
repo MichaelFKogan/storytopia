@@ -392,7 +392,7 @@ struct HomeView: View {
     
     var body: some View {
         ZStack {
-            NavigationView {
+
                 ZStack {
                     // Background color
                     Color.black
@@ -444,6 +444,8 @@ struct HomeView: View {
                                             .shadow(color: Color(hex: "#275faa").opacity(1), radius: 0, x: 5, y: 5) // Shadow
                                             .padding(.horizontal, 20)
                                             .padding(.top, 10)
+                                            .minimumScaleFactor(0.5) // Allows the text to scale down to 50% of its original size
+                                            .lineLimit(1) // Ensures the text stays on a single line
                                         //                                    .id(scrollToTopID)
                                         
                                         VStack {
@@ -482,46 +484,49 @@ struct HomeView: View {
                                             ),
                                                            tag: index, // Associate each item with an index
                                                            selection: $selectedStoryIndex ) {
-                                                ZStack {
-                                                    // AsyncImage for image loading
-                                                    AsyncImage(url: URL(string: item.url ?? "")) { phase in
-                                                        switch phase {
-                                                        case .empty:
-                                                            Color.gray
-                                                                .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                                        case .success(let image):
-                                                            image
-                                                                .resizable()
-                                                                .scaledToFill()
-                                                                .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                                                .clipped()
-                                                        case .failure:
-                                                            Color.gray
-                                                                .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                                        @unknown default:
-                                                            EmptyView()
+                                                GeometryReader { geometry in
+                                                    ZStack {
+                                                        // AsyncImage for image loading
+                                                        AsyncImage(url: URL(string: item.url ?? "")) { phase in
+                                                            switch phase {
+                                                            case .empty:
+                                                                Color.gray
+                                                                    .frame(width: geometry.size.width + 5, height: 200)
+                                                            case .success(let image):
+                                                                image
+                                                                    .resizable()
+                                                                    .scaledToFill()
+                                                                    .frame(width: geometry.size.width + 5, height: 200)
+                                                                    .clipped()
+                                                            case .failure:
+                                                                Color.gray
+                                                                    .frame(width: geometry.size.width + 5, height: 200)
+                                                            @unknown default:
+                                                                EmptyView()
+                                                            }
+                                                        }
+                                                        
+                                                        // Title Overlay at the Bottom
+                                                        VStack {
+                                                            Spacer()
+                                                            Text(item.title)
+                                                                .font(.custom("AvenirNext-Bold", size: 14))
+                                                                .lineLimit(8)
+                                                                .foregroundColor(.white)
+                                                                .shadow(color: .black, radius: 2, x: 1, y: 1)
+                                                                .padding([.bottom, .leading], 10)
+                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                .multilineTextAlignment(.leading)
                                                         }
                                                     }
-                                                    
-                                                    // Title Overlay at the Bottom
-                                                    VStack {
-                                                        Spacer()
-                                                        Text(item.title)
-                                                            .font(.custom("AvenirNext-Bold", size: 14))
-                                                            .lineLimit(8)
-                                                            .foregroundColor(.white)
-                                                            .shadow(color: .black, radius: 2, x: 1, y: 1)
-                                                            .padding([.bottom, .leading], 10)
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .multilineTextAlignment(.leading)
-                                                    }
                                                 }
+                                                .frame(height: 200) // Set a fixed height for the container
                                             }
-                                                           .onAppear {
-                                                               if !item.hasLoadedURL {
-                                                                   viewModel.fetchImageURL(for: item)
-                                                               }
-                                                           }
+                                           .onAppear {
+                                               if !item.hasLoadedURL {
+                                                   viewModel.fetchImageURL(for: item)
+                                               }
+                                           }
                                         }
                                     }
                                     .padding(.top, 0)
@@ -587,7 +592,7 @@ struct HomeView: View {
                 .onAppear {
                     viewModel.fetchStories()
                 }
-            }
+            
             // Show the SubscriptionModal if showModal is true
             if showModal {
                 SubscriptionModal(showModal: $showModal)
@@ -760,7 +765,7 @@ struct NewView: View {
     
     var body: some View {
         ZStack{
-            NavigationView {
+
                 ZStack {
                     Color.black.edgesIgnoringSafeArea(.all)
                     
@@ -825,31 +830,43 @@ struct NewView: View {
                                                         storyIndex: storyIndex,
                                                         selectedStoryIndex: $selectedStoryIndex,
                                                         viewModel: viewModel)) {
-                                                            ZStack {
-                                                                AsyncImage(url: URL(string: item.url ?? "")) { phase in
-                                                                    switch phase {
-                                                                    case .empty:
-                                                                        Color.gray.frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                                                    case .success(let image):
-                                                                        image.resizable().scaledToFill().frame(width: UIScreen.main.bounds.width / 3, height: 200).clipped()
-                                                                    case .failure:
-                                                                        Color.gray.frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                                                    @unknown default:
-                                                                        EmptyView()
+                                                            GeometryReader { geometry in
+                                                                ZStack {
+                                                                    // AsyncImage for image loading
+                                                                    AsyncImage(url: URL(string: item.url ?? "")) { phase in
+                                                                        switch phase {
+                                                                        case .empty:
+                                                                            Color.gray
+                                                                                .frame(width: geometry.size.width + 5, height: 200)
+                                                                        case .success(let image):
+                                                                            image
+                                                                                .resizable()
+                                                                                .scaledToFill()
+                                                                                .frame(width: geometry.size.width + 5, height: 200)
+                                                                                .clipped()
+                                                                        case .failure:
+                                                                            Color.gray
+                                                                                .frame(width: geometry.size.width + 5, height: 200)
+                                                                        @unknown default:
+                                                                            EmptyView()
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    // Title Overlay at the Bottom
+                                                                    VStack {
+                                                                        Spacer()
+                                                                        Text(item.title)
+                                                                            .font(.custom("AvenirNext-Bold", size: 14))
+                                                                            .lineLimit(8)
+                                                                            .foregroundColor(.white)
+                                                                            .shadow(color: .black, radius: 2, x: 1, y: 1)
+                                                                            .padding([.bottom, .leading], 10)
+                                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                                            .multilineTextAlignment(.leading)
                                                                     }
                                                                 }
-                                                                VStack {
-                                                                    Spacer()
-                                                                    Text(item.title)
-                                                                        .font(.custom("AvenirNext-Bold", size: 14))
-                                                                        .lineLimit(8)
-                                                                        .foregroundColor(.white)
-                                                                        .shadow(color: .black, radius: 2, x: 1, y: 1)
-                                                                        .padding([.bottom, .leading], 10)
-                                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                                        .multilineTextAlignment(.leading)
-                                                                }
                                                             }
+                                                            .frame(height: 200) // Set a fixed height for the container
                                                         }
                                                 }
                                             }
@@ -918,7 +935,7 @@ struct NewView: View {
                 .onAppear {
                     viewModel.fetchStories()
                 }
-            }
+            
             // Show the SubscriptionModal if showModal is true
             if showModal {
                 SubscriptionModal(showModal: $showModal)
@@ -995,7 +1012,7 @@ struct GenreDetailView: View {
                         let categories = genreViewModel.extractCategories(from: story.genre)
                         return categories.contains(category)
                     }, id: \.id) { story in
-                        NavigationLink(destination: StoryView(
+                        NavigationLink(destination: StoryViewGenre(
                             imageUrl: story.url ?? "",
                             title: story.title,
                             genre: story.genre,
@@ -1005,38 +1022,43 @@ struct GenreDetailView: View {
                             selectedStoryIndex: .constant(0),
                             viewModel: viewModel
                         )) {
-                            ZStack {
-                                AsyncImage(url: URL(string: story.url ?? "")) { phase in
-                                    switch phase {
-                                    case .empty:
-                                        Color.gray
-                                            .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                            .clipped()
-                                    case .failure:
-                                        Color.gray
-                                            .frame(width: UIScreen.main.bounds.width / 3, height: 200)
-                                    @unknown default:
-                                        EmptyView()
+                            GeometryReader { geometry in
+                                ZStack {
+                                    // AsyncImage for image loading
+                                    AsyncImage(url: URL(string: story.url ?? "")) { phase in
+                                        switch phase {
+                                        case .empty:
+                                            Color.gray
+                                                .frame(width: geometry.size.width + 5, height: 200)
+                                        case .success(let image):
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: geometry.size.width + 5, height: 200)
+                                                .clipped()
+                                        case .failure:
+                                            Color.gray
+                                                .frame(width: geometry.size.width + 5, height: 200)
+                                        @unknown default:
+                                            EmptyView()
+                                        }
+                                    }
+                                    
+                                    // Title Overlay at the Bottom
+                                    VStack {
+                                        Spacer()
+                                        Text(story.title)
+                                            .font(.custom("AvenirNext-Bold", size: 14))
+                                            .lineLimit(8)
+                                            .foregroundColor(.white)
+                                            .shadow(color: .black, radius: 2, x: 1, y: 1)
+                                            .padding([.bottom, .leading], 10)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .multilineTextAlignment(.leading)
                                     }
                                 }
-                                
-                                VStack {
-                                    Spacer()
-                                    Text(story.title)
-                                        .font(.custom("AvenirNext-Bold", size: 14))
-                                        .lineLimit(8)
-                                        .foregroundColor(.white)
-                                        .shadow(color: .black, radius: 2, x: 1, y: 1)
-                                        .padding([.bottom, .leading], 10)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .multilineTextAlignment(.leading)
-                                }
                             }
+                            .frame(height: 200) // Set a fixed height for the container
                         }
                     }
                 }
@@ -1763,6 +1785,292 @@ struct StoryViewDate: View {
             }
     }
 }
+
+
+
+
+
+
+
+
+
+struct StoryViewGenre: View {
+    var imageUrl: String
+    var title: String
+    var genre: String
+    var synopsis: String
+    var story: String
+    
+    var currentIndex: Int
+    @Binding var selectedStoryIndex: Int?
+    var viewModel: StoryViewModel  // Receive viewModel
+    
+    @Environment(\.presentationMode) var presentationMode
+    @State private var dragAmount: CGFloat = 0
+    
+    // State for manual navigation
+    @State private var navigateToNext = false
+    @State private var showPopup = false // State for showing the popup
+    @State private var scrollOffset: CGFloat = 0
+    
+    // State for subscription
+    @EnvironmentObject var storeManager: StoreManager  // Shared instance
+    
+    // Split the story into paragraphs
+    private var paragraphs: [String] {
+        return story.components(separatedBy: "\n").filter { !$0.isEmpty }
+    }
+    
+    var body: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            VStack {
+                ScrollView {
+                    VStack(alignment: .leading) {
+                        AsyncImage(url: URL(string: imageUrl)) { phase in
+                            switch phase {
+                            case .empty:
+                                Color.gray.frame(height: 300)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: .infinity)
+                                    .clipped()
+                            case .failure:
+                                Color.gray.frame(height: 300)
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                        
+                        //                        if storeManager.isSubscribed {
+                        //                            restoreSubscriptionView
+                        //                        }
+                        
+                        titleView
+                        genreView
+                        synopsisView
+                        storyParagraphsView
+                        
+                        if !storeManager.isSubscribed {
+                            subscriptionView
+                        }
+                        
+                        additionalStoryParagraphsView
+                        Spacer()
+                    }
+                    .padding(.top)
+                    .padding(.bottom, 300)
+                }
+            }
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    nextStoryButton
+//                }
+//            }
+            .padding([.top, .trailing], 16)
+        }
+        .navigationTitle("")
+        .navigationBarHidden(false)
+        .gesture(dragGesture)
+    }
+    
+    
+    private var titleView: some View {
+        Text(title)
+            .font(.largeTitle)
+            .fontWeight(.bold)
+            .foregroundColor(.white)
+            .padding(.leading, 20)
+    }
+    
+    private var genreView: some View {
+        Text(genre)
+            .font(.title2)
+            .foregroundColor(.white.opacity(0.8))
+            .padding(.leading, 20)
+    }
+    
+    private var synopsisView: some View {
+        Text(synopsis)
+            .font(.body)
+            .foregroundColor(.white.opacity(0.8))
+            .padding(.leading, 20)
+            .padding(.top, 4)
+            .italic()
+    }
+    
+    private var storyParagraphsView: some View {
+        ForEach(0..<min(paragraphs.count, 3), id: \.self) { index in
+            Text(paragraphs[index])
+                .font(.system(size: 22))
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .padding(.leading, 20)
+                .padding(.trailing, 0)
+                .padding(.top, 10)
+                .lineSpacing(0)
+        }
+    }
+    
+    private var subscriptionView: some View {
+        VStack {
+            // Check if the user is eligible for the free trial
+             if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }),
+                let introductoryPrice = product.introductoryPrice {
+                 
+                 Text("7-Day Free Trial")
+                     .font(.largeTitle)
+                     .fontWeight(.bold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 20)
+                 
+                 Text("Then \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month")
+                     .font(.title2)
+                     .fontWeight(.semibold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 // Additional description for the free trial
+                 Text("You'll get full access to all stories for 7 days. After the trial, your subscription will automatically renew for \(introductoryPrice.priceLocale.currencySymbol ?? "$")\(product.price)/month unless canceled.")
+                     .font(.subheadline)
+                     .foregroundColor(.white.opacity(0.8))
+                     .multilineTextAlignment(.center)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 10)
+                 
+                 Text("To avoid charges, cancel anytime before the trial ends in your Apple ID settings.")
+                     .font(.footnote)
+                     .foregroundColor(.white.opacity(0.8))
+                     .multilineTextAlignment(.center)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 Button(action: {
+                     if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                         storeManager.purchase(product: product)
+                     }
+                 }) {
+                     Text("Start Free Trial")
+                         .font(.headline)
+                         .foregroundColor(.white)
+                         .padding()
+                         .background(Color.blue)
+                         .cornerRadius(10)
+                         .padding(.top, 10)
+                 }
+                 
+             } else {
+                 Text("Subscribe for Full Access")
+                     .font(.largeTitle)
+                     .fontWeight(.bold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 20)
+                     .multilineTextAlignment(.center)
+                 
+                 Text("$9.99/month")
+                     .font(.title2)
+                     .fontWeight(.semibold)
+                     .foregroundColor(.white)
+                     .padding(.horizontal, 20)
+                     .padding(.top, 5)
+                 
+                 Button(action: {
+                     if let product = storeManager.products.first(where: { $0.productIdentifier == "storytopia_monthly_subscription" }) {
+                         storeManager.purchase(product: product)
+                     }
+                 }) {
+                     Text("Subscribe Now")
+                         .font(.headline)
+                         .foregroundColor(.white)
+                         .padding()
+                         .background(Color.blue)
+                         .cornerRadius(10)
+                         .padding(.top, 10)
+                 }
+                 
+             }
+            
+            Text("Get unlimited access to all stories.")
+                .font(.body)
+                .foregroundColor(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.top, 10)
+                .padding(.bottom, 0)
+            
+            Text("Cancel anytime.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.top, 0)
+        }
+        .padding(.top, 20)
+        .padding(.bottom, 30)
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+    
+    private var additionalStoryParagraphsView: some View {
+        ForEach(3..<paragraphs.count, id: \.self) { index in
+            Text(paragraphs[index])
+                .font(.system(size: 22))
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .padding(.leading, 20)
+                .padding(.trailing, 0)
+                .padding(.top, 10)
+                .lineSpacing(0)
+                .blur(radius: storeManager.isSubscribed ? 0 : 5) // Remove blur if subscribed
+        }
+    }
+    
+//    private var nextStoryButton: some View {
+//        NavigationLink(
+//            destination: StoryViewGenre(
+//                imageUrl: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].url ?? "",
+//                title: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].title,
+//                genre: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].genre,
+//                synopsis: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].synopsis ?? "",
+//                story: viewModel.stories[(currentIndex + 1) % viewModel.stories.count].story,
+//                currentIndex: (currentIndex + 1) % viewModel.stories.count,
+//                selectedStoryIndex: $selectedStoryIndex,
+//                viewModel: viewModel
+//            ),
+//            isActive: $navigateToNext
+//        ) {
+//            HStack(spacing: 4) {
+//                
+//                Image(systemName: "chevron.right")
+//            }
+//            .foregroundColor(.blue)
+//        }
+//    }
+    
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                dragAmount = value.translation.width
+            }
+            .onEnded { value in
+                // Swipe left (forward): Navigate to next story
+                if dragAmount < -50 {
+                    navigateToNext = true
+                }
+                // Swipe right (backward): Go back (dismiss the view)
+                else if dragAmount > 50 {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            }
+    }
+}
+
+
 
 
 
