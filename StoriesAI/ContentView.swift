@@ -346,6 +346,17 @@ struct ContentView: View {
                     Label("Random", systemImage: "shuffle")
                 }
                 .tag(3) // Use tag 3 for the Random tab
+            
+            // New Settings Tab
+            NavigationStack {
+                SettingsView()
+                    .environmentObject(storeManager)
+            }
+            .tabItem {
+                Image(systemName: "gearshape")
+                Text("Settings")
+            }
+            .tag(4) // Use tag 4 for the Settings tab
         }
         .environmentObject(viewModel)
         .onAppear {
@@ -370,6 +381,116 @@ struct ContentView: View {
 
 
 
+
+
+
+
+
+    struct SettingsView: View {
+        @EnvironmentObject var storeManager: StoreManager
+        
+        var body: some View {
+            ZStack {
+                // Full-screen black background
+                Color.black
+                    .edgesIgnoringSafeArea(.all)
+                
+                VStack(spacing: 20) {
+                    // Title at the top
+                    Text("Settings")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.top, 40) // Adjust for safe area or navigation bar height
+                        .padding(.bottom, 100)
+                    
+                    // Content
+                    VStack(spacing: 20) {
+                        // Terms of Use Link
+                        Button(action: {
+                            if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
+                                UIApplication.shared.open(url)
+                            }
+                        }) {
+                            Text("Terms Of Use")
+                                .font(.title2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                        }
+                        
+                        // Privacy Policy Link
+                        Button(action: {
+                            if let url = URL(string: "https://docs.google.com/document/d/1TwETsLxEmmsuHofUD4DVHT3SbShfENEfrU70CoQxTP8/edit?usp=sharing") {
+                                UIApplication.shared.open(url)
+                            }
+                        }) {
+                            Text("Privacy Policy")
+                                .font(.title2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                        }
+                        
+                        // Restore Purchases Button
+
+                        // Restore Purchases Button (Replace existing button with RestoreButton)
+                        RestoreButton()
+                    }
+                    
+                    Spacer() // Ensure the content stays centered vertically
+                }
+                .padding()
+            }
+        }
+    }
+
+
+
+
+
+
+struct RestoreButton: View {
+    @EnvironmentObject var storeManager: StoreManager
+    @State private var showRestoreSuccess: Bool = false // State for showing success message
+
+    var body: some View {
+        VStack {
+            // Restore Purchases Button
+            Button(action: {
+                showRestoreSuccess = false // Reset success message
+                storeManager.restorePurchases()
+            }) {
+                if storeManager.isRestoring {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .tint(.white) // Make the loading bar white
+                } else {
+                    Text("Restore Purchases")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                }
+            }
+            .disabled(storeManager.isRestoring) // Disable the button during the restore process
+            
+            // Success Message
+            if showRestoreSuccess {
+                Text("Restore Completed Successfully!")
+                    .font(.footnote)
+                    .foregroundColor(.green)
+                    .padding(.top, 10)
+                    .transition(.opacity) // Add a fade-in effect
+            }
+        }
+        .onChange(of: storeManager.isRestoring) { isRestoring in
+            if !isRestoring, storeManager.isSubscribed {
+                // Show success message only if restore completed and subscription is valid
+                withAnimation {
+                    showRestoreSuccess = true
+                }
+            }
+        }
+    }
+}
 
 
 
@@ -531,59 +652,6 @@ struct HomeView: View {
                                     }
                                     .padding(.top, 0)
                                 }.padding(.bottom, 100)
-                                Spacer()
-                                HStack {
-                                    Spacer()
-                                    // Terms of Use Link
-                                    Button(action: {
-                                        if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
-                                            UIApplication.shared.open(url)
-                                        }
-                                    }) {
-                                        Text("Terms Of Use")
-                                            .font(.custom("Futura", size: 12))
-                                            .fontWeight(.regular)
-                                            .foregroundColor(.white)
-                                            .padding(.top, 0)
-                                            .padding(.bottom, 0)
-                                    }
-                                    
-                                    Spacer()
-
-                                    // Privacy Policy Link
-                                    Button(action: {
-                                        if let url = URL(string: "https://docs.google.com/document/d/1TwETsLxEmmsuHofUD4DVHT3SbShfENEfrU70CoQxTP8/edit?usp=sharing") {
-                                            UIApplication.shared.open(url)
-                                        }
-                                    }) {
-                                        Text("Privacy Policy")
-                                            .font(.custom("Futura", size: 12))
-                                            .fontWeight(.regular)
-                                            .foregroundColor(.white)
-                                            .padding(.top, 0)
-                                            .padding(.bottom, 0)
-                                    }
-                                    
-                                    Spacer()
-
-                                    // Restore Purchases Button
-                                    Button(action: {
-                                        isRestoring = true
-                                        storeManager.restorePurchases()
-                                    }) {
-                                        if isRestoring {
-                                            ProgressView()  // Spinner to indicate activity
-                                                .progressViewStyle(CircularProgressViewStyle())
-                                        } else {
-                                            Text("Restore Purchases")
-                                                .font(.custom("Futura", size: 12))
-                                                .fontWeight(.regular)
-                                                .foregroundColor(.white)
-                                        }
-                                    }
-                                    .disabled(isRestoring)  // Disable the button during the restore process
-                                    Spacer()
-                                }.padding(.bottom, 20)
                             }
                         }
                     }
@@ -875,58 +943,6 @@ struct NewView: View {
                                     }
                                 }
                                 .padding(.bottom, 100)
-                                HStack {
-                                    Spacer()
-                                    // Terms of Use Link
-                                    Button(action: {
-                                        if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
-                                            UIApplication.shared.open(url)
-                                        }
-                                    }) {
-                                        Text("Terms Of Use")
-                                            .font(.custom("Futura", size: 12))
-                                            .fontWeight(.regular)
-                                            .foregroundColor(.white)
-                                            .padding(.top, 0)
-                                            .padding(.bottom, 0)
-                                    }
-                                    
-                                    Spacer()
-
-                                    // Privacy Policy Link
-                                    Button(action: {
-                                        if let url = URL(string: "https://docs.google.com/document/d/1TwETsLxEmmsuHofUD4DVHT3SbShfENEfrU70CoQxTP8/edit?usp=sharing") {
-                                            UIApplication.shared.open(url)
-                                        }
-                                    }) {
-                                        Text("Privacy Policy")
-                                            .font(.custom("Futura", size: 12))
-                                            .fontWeight(.regular)
-                                            .foregroundColor(.white)
-                                            .padding(.top, 0)
-                                            .padding(.bottom, 0)
-                                    }
-                                    
-                                    Spacer()
-
-                                    // Restore Purchases Button
-                                    Button(action: {
-                                        isRestoring = true
-                                        storeManager.restorePurchases()
-                                    }) {
-                                        if isRestoring {
-                                            ProgressView()  // Spinner to indicate activity
-                                                .progressViewStyle(CircularProgressViewStyle())
-                                        } else {
-                                            Text("Restore Purchases")
-                                                .font(.custom("Futura", size: 12))
-                                                .fontWeight(.regular)
-                                                .foregroundColor(.white)
-                                        }
-                                    }
-                                    .disabled(isRestoring)  // Disable the button during the restore process
-                                    Spacer()
-                                }.padding(.bottom, 20)
                             }
                         }
                     }

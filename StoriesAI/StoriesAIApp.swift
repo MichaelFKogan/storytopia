@@ -12,7 +12,8 @@ class StoreManager: NSObject, ObservableObject {
     @Published var products: [SKProduct] = []
     @Published var purchasedProductIDs: Set<String> = []
     @Published var isSubscribed: Bool = false
-    
+    @Published var isRestoring: Bool = false
+
 
     private var productRequest: SKProductsRequest?
 
@@ -53,10 +54,31 @@ class StoreManager: NSObject, ObservableObject {
 
     // Restore purchases
     func restorePurchases() {
+        isSubscribed = false // Reset subscription status before restoring
+        isRestoring = true   // Indicate that the restore process is ongoing
         SKPaymentQueue.default().restoreCompletedTransactions()
-        checkSubscriptionExpiry()
         print("Restore purchases initiated.")
     }
+
+    func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+        DispatchQueue.main.async {
+            self.isRestoring = false
+            self.checkSubscriptionExpiry() // Check if subscription is valid
+            if self.isSubscribed {
+                print("Restore purchases completed successfully.")
+            } else {
+                print("No active subscription found during restore.")
+            }
+        }
+    }
+
+    func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
+        DispatchQueue.main.async {
+            self.isRestoring = false
+            print("Restore purchases failed: \(error.localizedDescription)")
+        }
+    }
+
 
 
     // Unlock content by marking the product ID as purchased
@@ -119,38 +141,53 @@ extension StoreManager: SKPaymentTransactionObserver {
 struct ConstrainedWidthModifier: ViewModifier {
     let maxWidthForPadLandscape: CGFloat
     let maxWidthForPadPortrait: CGFloat
+    let maxWidthForiPhoneLandscape: CGFloat
 
     func body(content: Content) -> some View {
         GeometryReader { geometry in
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                let isLandscape = geometry.size.width > geometry.size.height
-                let deviceMaxWidth = isLandscape ? maxWidthForPadLandscape : maxWidthForPadPortrait
+            let isLandscape = geometry.size.width > geometry.size.height
+            let isPad = UIDevice.current.userInterfaceIdiom == .pad
+
+            ZStack {
+                // Black background for the full screen
+                Color.black
+                    .ignoresSafeArea()
 
                 content
                     .frame(
-                        width: geometry.size.width > deviceMaxWidth
-                            ? deviceMaxWidth
-                            : geometry.size.width
+                        width: {
+                            if isPad {
+                                return isLandscape
+                                    ? min(geometry.size.width, maxWidthForPadLandscape)
+                                    : min(geometry.size.width, maxWidthForPadPortrait)
+                            } else if isLandscape {
+                                return min(geometry.size.width, maxWidthForiPhoneLandscape)
+                            } else {
+                                return geometry.size.width
+                            }
+                        }(),
+                        alignment: .center
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemBackground))
                     .clipped()
-            } else {
-                content // No constraints for non-iPad devices
             }
         }
     }
 }
 
+
+
 extension View {
     func constrainedWidth(
         maxWidthForPadLandscape: CGFloat,
-        maxWidthForPadPortrait: CGFloat
+        maxWidthForPadPortrait: CGFloat,
+        maxWidthForiPhoneLandscape: CGFloat
     ) -> some View {
         self.modifier(
             ConstrainedWidthModifier(
                 maxWidthForPadLandscape: maxWidthForPadLandscape,
-                maxWidthForPadPortrait: maxWidthForPadPortrait
+                maxWidthForPadPortrait: maxWidthForPadPortrait,
+                maxWidthForiPhoneLandscape: maxWidthForiPhoneLandscape
             )
         )
     }
@@ -166,22 +203,28 @@ extension View {
 @main
 struct StoriesAIApp: App {
     @StateObject private var storeManager = StoreManager()
-    private let maxWidthForPadLandscape: CGFloat = 900 // Maximum width for iPad in landscape
+    private let maxWidthForPadLandscape: CGFloat = 950 // Maximum width for iPad in landscape
     private let maxWidthForPadPortrait: CGFloat = 800  // Maximum width for iPad in portrait
-
+    private let maxWidthForiPhoneLandscape: CGFloat = 700 // Maximum width for iPhone in landscape
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(storeManager)
-                .constrainedWidth(
-                    maxWidthForPadLandscape: maxWidthForPadLandscape,
-                    maxWidthForPadPortrait: maxWidthForPadPortrait
-                )
-                .onAppear {
-                    // Print subscription status when the main view appears
-                    print("isSubscribed (onAppear): \(storeManager.isSubscribed)")
-                }
+            ZStack {
+                Color.black // Set the global background color to black
+                    .ignoresSafeArea() // Ensure it covers the entire screen
+                ContentView()
+                    .environmentObject(storeManager)
+                    .constrainedWidth(
+                        maxWidthForPadLandscape: maxWidthForPadLandscape,
+                        maxWidthForPadPortrait: maxWidthForPadPortrait,
+                        maxWidthForiPhoneLandscape: maxWidthForiPhoneLandscape
+                    )
+            }
+            .onAppear {
+                // Print subscription status when the main view appears
+                print("isSubscribed (onAppear): \(storeManager.isSubscribed)")
+            }
         }
     }
 }
+
