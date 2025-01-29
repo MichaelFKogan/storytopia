@@ -19,7 +19,8 @@ class StoreManager: NSObject, ObservableObject {
 
     override init() {
         super.init()
-        self.isSubscribed = false
+//        self.isSubscribed = false
+        self.isSubscribed = true  // Force subscription status to true to make app free
         SKPaymentQueue.default().add(self)
     }
 
